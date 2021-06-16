@@ -64,10 +64,9 @@ To distinguish the registered HX4-PET from the unregistered one, the two are den
 % --------------------------------
 \subsection{Data Processing Steps}
 \label{Data_Processing}
-The different processing steps are discussed here that were performed on the dataset to prepare and convert it into a form that can be used for GAN training. The overall data processing can be broken down into two phases, which are elaborated in \ref{data_proc_phase_1} and \ref{data_proc_phase_2}. 
+The Maastro Lung HX4 dataset needed to be prepared and converted into a form that could be used for GAN training. The different processing steps performed on the data are discussed here. The overall data processing can be broken down into two phases, which are elaborated in the following paragraphs. 
 
 \subsubsection{Loading Images and Converting to Appropriate Representation}
-\label{data_proc_phase_1}
 The first step was to load the images from different formats into computer memory and convert to a standard programmatic representation. All the original images, except for HX4-PET-reg, were supplied as DICOM series. 
 
 \vspace{4mm}
@@ -96,7 +95,6 @@ Following this, the FDG-PET, HX4-PET-unreg, pCT and the tumor and body masks wer
 
 
 \subsubsection{Cropping and Resampling}
-\label{data_proc_phase_2}
 
 \begin{figure}[h!]
     \centering
@@ -178,18 +176,42 @@ where $x$ and $y$ are random variables representing samples from domain \textit{
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/GANs/Pix2Pix.jpg}
-    \caption{Pix2Pix training phases. \textit{G} and \textit{D} are updated in an alternating manner. In practice, FDG-PET and pCT images stacked channel-wise and given as input \textit{G}. For the \textit{D}, the conditioning was implemented by channel-wise stacking the HX4-PET-reg or HX4-PET-syn with FDG-PET and pCT.}
+    \caption{Pix2Pix training phases. \textit{G} and \textit{D} are updated in an alternating manner. In practice, FDG-PET and pCT images were stacked channel-wise and given as input to \textit{G}. And in \textit{D}, the conditioning was implemented by channel-wise stacking the HX4-PET-reg or HX4-PET-syn with FDG-PET and pCT.}
     \label{fig:pix2pix}
 \end{figure}{}
 
-For our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical images. Given the FDG-PET and pCT images as input, the model was trained to generate plausible HX4-PET-syn images by providing supervision with the ground-truth HX4-PET-reg. Figure \ref{fig:pix2pix} shows a schematic of the generator and discriminator training phases.
+In our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical images. Given the FDG-PET and pCT images as input, the model was trained to generate plausible HX4-PET-syn images by providing supervision with the ground-truth HX4-PET-reg. Figure \ref{fig:pix2pix} shows a schematic of the generator and discriminator training phases.
 
 
 % -------------------
 \subsection{CycleGAN}
 \label{cyclegan}
 
+\subsubsection{CycleGAN-naive}
 
+\begin{figure}[h!]
+    \centering
+    \makebox[\textwidth][c]
+    {
+        \includegraphics[width=1.4\linewidth]{figures/GANs/CycleGAN-naive.jpg}
+    }
+    \caption{CycleGAN-naive training phases. ...}
+    \label{fig:cyclegan_naive}
+\end{figure}{}
+
+
+
+\subsubsection{CycleGAN-balanced}
+
+\begin{figure}[h!]
+    \centering
+    \makebox[\textwidth][c]
+    {
+        \includegraphics[width=1.4\linewidth]{figures/GANs/CycleGAN-balanced.jpg}
+    }
+    \caption{CycleGAN-balanced training phases. ...}
+    \label{fig:cyclegan_balanced}
+\end{figure}{}
 
 
 % ---------------------------------------
