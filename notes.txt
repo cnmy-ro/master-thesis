@@ -1,0 +1,20 @@
+HX4 dataset name:  "Maastro Lung HX4"
+
+Names for HX4-PET images: 
+    - HX4-PET-unreg 
+    - HX4-PET-reg
+    - HX4-PET-syn
+
+
+Thesis - Long story short:
+    - Using GANs to solve FDG-PET/CT -> HX4-PET translation problem, by modeling HX4 uptake as function of CT features and FDG uptake 
+    - Hypothesis: 
+        1. GANs can produce realistic HX4-PET-syn images. 
+        2. Using multiple IQA metrics of different types, the overall image quality can be captured more completely. These can be applied also to track model training. Application-specific downstream analysis is also necessary if the goal is clinical adoption.
+    - Trying out both paired and unpaired approaches
+    - Unpaired CycleGAN not sensible to be applied directly, CycleGAN-balanced created
+    - Cleargrasp toy task to prototype and preliminarily compare the GANs -- pix2pix best, balanced improved over naive
+    - On real data -- same performance order on image level, balanced training more stable than naive; pix2pix especially sucks on tumor level probably coz reg errors more pronounced at this scale, cyclegans might be promising if sufficient data is given 
+    - Conclusion -- 
+        1. GANs did produce realistic HX4-PET-syn images.
+        2. Using multiple IQA 
