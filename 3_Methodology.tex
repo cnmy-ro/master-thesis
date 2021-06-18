@@ -129,14 +129,14 @@ The second data processing phase involved cropping and resampling the loaded ima
     \label{fig:data_proc_overview_2}
 \end{figure}
 
-Finally, all the processed images were saved as \textit{.nrrd} files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin, as a single file. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far.
+Finally, all the processed images were saved as \textit{.nrrd} files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin, as a single file. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far. The dataset was then split into a training set and a validation set. The training set was comprised of data from the PET-Boost clinical trial (15 patients), and the validation set consisted of the data from the Nitroglycerin trial (19 patients). 
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{GAN Systems}
 \label{GAN_Systems}
-This section describes the image translation GAN systems used in our study. Throughout this section, domain \textit{A} is be used to represent the domain of valid multimodal FDG-PET/pCT images, and \textit{B} to represent the domain of the HX4-PET images. Synthetic HX4-PET images are denoted as \textit{HX4-PET-syn}.
+This section describes the image translation GAN systems used in our study. Unless explicitly mentioned otherwise, domain \textit{A} is used throughout this section to represent the domain of valid multimodal FDG-PET/pCT images, and \textit{B} to represent the domain of HX4-PET images. Synthetic HX4-PET images are denoted as \textit{HX4-PET-syn}.
 
 
 % ------------------
@@ -218,8 +218,7 @@ Figure \ref{fig:cyclegan_concept} shows a simplified conceptual diagram of Cycle
 
 \subsubsection{CycleGAN-naive: Default CycleGAN applied to HX4-PET synthesis problem}
 
-We investigated unpaired FDG-PET/pCT to HX4-PET translation using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our medical image translation problem is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive.
-
+We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our medical image translation problem is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive. 
 
 \begin{figure}[h!]
     \centering
@@ -227,13 +226,29 @@ We investigated unpaired FDG-PET/pCT to HX4-PET translation using CycleGAN. The 
     {
         \includegraphics[width=1.5\linewidth]{figures/GANs/CycleGAN-naive.png}
     }
-    \caption{CycleGAN-naive training phases. ...}
+    \caption{CycleGAN-naive training phases. The generators and discriminators are updated in an alternating manner.}
     \label{fig:cyclegan_naive}
 \end{figure}{}
 
+We argue that CycleGAN-naive has several drawbacks, and hence, is not an optimal implementation of CycleGAN for our use-case. In the \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, $G_{AB}$ takes as input FDG-PET and pCT to output HX4-PET-syn, and $G_{BA}$ uses HX4-PET-syn to reconstruct FDG-PET and pCT. While the task $G_{AB}$ is realistic since hypoxia patterns can be reliably predicted from the inputs and therefore has a physiological basis (see \ref{Related_Work-hypoxia_prediction}), the task $G_{BA}$ is not reasonable. It is not possible to precisely predict a patient's anatomy (CT) as well as their metabolism levels (FDG) from just the hypoxia information, and the CT modality is of more concern here. A CT image contains highly detailed structural information with sharp and fine features, whereas PET images are functional heatmaps having blurred and diffused characteristics. $G_{BA}$ cannot accurately recreate pCT from HX4-PET-syn unless $G_{AB}$ encodes the CT information into the latter in the form of noise. But, then the HX4-PET-syn image would not resemble a clinically acquired HX4-PET scan. Therefore, cycle-consistency constraint conflicts the domain \textit{B} adversarial criterion instead of complementing it. Now looking at the \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle, the task of $G_{BA}$ is to compute realistic FDG-PET and pCT given only the real HX4-PET-unreg image, which it can perform, especially in pCT, by hallucinating the patient's anatomy. However, in that case, $G_{AB}$ would need to use this fake information to precisely reconstruct the HX4-PET-unreg. Because the task of $G_{AB}$ is to correctly predict hypoxia based on given CT (and FDG-PET) information, it is unreasonable to provide it with fake anatomical information and expect it to predict hypoxia patterns from it that match the real HX4-PET-unreg. Hence, in this cycle as well, cycle-consistency requirement conflicts with adversarial objective. Based on these reasons, we believe that CycleGAN, in its default form, cannot tackle the problem task, and that a more intelligent strategy is required.
 
 
 \subsubsection{CycleGAN-balanced: An improved design}
+
+We propose a custom design improvement to CycleGAN training to make the system more optimized for our use-case. In PET acquisition, CT scan plays an important role of providing material density information which is used to provide density-correction to the recorded PET intensities. We utilize the fact that an HX4-PET scan is always acquired together with a CT scan which, in our dataset, is a low-dose CT (ldCT). Since the model training is unpaired, the ldCT-unreg images are included in the training data. 
+
+To begin with, we slightly tweak what the domains \textit{A} and \textbf{B} represent here -- let \textit{A} be the domain of FDG-PET images and \textit{B} of HX4-PET images. The CT images -- pCT and ldCT -- are then considered ``supporting" images that provide anatomical context to the generators. Note that pCT has voxel-wise correspondence only with FDG-PET, and ldCT-unreg is aligned only with HX4-PET-unreg. Now, the task of the generators is to take as input a PET image from its source domain and to compute its target domain PET image, while being supplied anatomical context using the available CT image (one that is aligned with the source domain PET). To elaborate on this, let us again consider the two cycles separately: 
+
+\vspace{4mm}
+\noindent
+\textit{A$\rightarrow$B$\rightarrow$A cycle}: Here, pCT is the available CT image which accompanies the FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ uses the two images and computes HX4-PET-syn. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ now \textit{reuses} the pCT as a support image along with the HX4-PET-syn (note that the two are aligned) to reconstruct FDG-PET. The pCT provides the same anatomical context for FDG-PET reconstruction as it did for HX4-PET-syn prediction. The cycle-consistency loss is computed just for the FDG-PET and its reconstructed version. If the HX4-PET-syn represents a plausible hypoxia prediction, then the FDG-PET can be recovered from it up to a great extent since both have an underlying physiological relationship. Therefore, adversarial loss would drive $G_{AB}$ to produce realistic HX4-PET-syn image and the cycle-consistency would encourage this image to be representative of the patient's physiology. 
+
+\vspace{4mm}
+\noindent
+\textit{B$\rightarrow$A$\rightarrow$B cycle}: In this case, ldCT-unreg is the available CT image that is coupled with the HX4-PET-unreg. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ uses these two images and computes an equivalent synthetic FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ reuses the ldCT-unreg and along with the synthetic FDG-PET (note that the ldCT-unreg and the synthetic FDG-PET are aligned), it reconstructs HX4-PET-unreg. Cycle-consistency is applied between the original and reconstructed HX4-PET-unreg. The same ldCT-unreg image provides anatomical context to FDG-PET synthesis and HX4-PET-unreg reconstruction, and if the synthetic FDG-PET represents plausible metabolism patterns, then HX4-PET-unreg can be mostly recovered. In this cycle as well, the adversarial and cycle-consistency objectives would behave in a reinforcing manner.
+
+\vspace{4mm}
+The introduction of CT as input to both generators creates a balance between the complexities of the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings since none of them involves predicting fake CT information, all the while still relying on completely unpaired training data. We term this modified design as CycleGAN-balanced. Figure \ref{fig:cyclegan_balanced} shows a schematic of the training phases of its generators and discriminators.
 
 \begin{figure}[h!]
     \centering
@@ -241,7 +256,7 @@ We investigated unpaired FDG-PET/pCT to HX4-PET translation using CycleGAN. The 
     {
         \includegraphics[width=1.5\linewidth]{figures/GANs/CycleGAN-balanced.png}
     }
-    \caption{CycleGAN-balanced training phases. ...}
+    \caption{CycleGAN-balanced training phases. \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} translation tasks are balanced. In both cases, CT image modality is used only as input to supply anatomical information as a support to the input PET image, and the task of the generator is to predict a single output PET image by combining this information.}
     \label{fig:cyclegan_balanced}
 \end{figure}{}
 
