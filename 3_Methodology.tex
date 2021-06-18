@@ -56,9 +56,9 @@ Note that although each of the two PET/CT couples -- FDG-PET/pCT and HX4-PET/ldC
     \label{fig:reg_images}
 \end{figure}{}
 
-The Maastro Lung HX4 dataset already included the registered HX4-PET and ldCT images, and therefore this registration step wasn't needed to be performed. These images were supplied in the .mhd/.raw format. The intensity values of the stored registered HX4-PET were expressed in SUVs, supposedly calculated before the registration process. 
+The Maastro Lung HX4 dataset already included the registered HX4-PET and ldCT images, and therefore this registration step wasn't needed to be performed. These images were supplied in the \textit{.mhd/.raw} format. The intensity values of the stored registered HX4-PET were expressed in SUVs, supposedly calculated before the registration process. 
 
-To distinguish the registered HX4-PET from the unregistered one, the two are denoted as \textit{HX4-PET-reg} and \textit{HX4-PET-unreg}, respectively. It is obvious that FDG-PET and pCT were needed since both would be the inputs to the GANs, and HX4-PET-reg to be the ground-truth given these inputs. And since HX4-PET-reg contained registration imperfections as seen in Figure \ref{fig:reg_images}, the HX4-PET-unreg instead would be used in the unpaired CycleGAN training to sidestep this issue. The \textit{unregistered} ldCT, \textit{ldCT-unreg}, would play a crucial role in the modified CycleGAN system as discussed further in \ref{data_requirements}, and hence was not discarded. However, the \textit{registered} ldCT wouldn't be required anymore beyond this point since its sole purpose was to aid in the registration of HX4-PET, and was thus discarded.
+To distinguish the registered HX4-PET from the unregistered one, the two are denoted as \textit{HX4-PET-reg} and \textit{HX4-PET-unreg}, respectively. The term \textit{HX4-PET} is used hereafter to denote the image modality in a general sense and not referring to the registered or unregistered versions of the images from the dataset. It is obvious that FDG-PET and pCT were needed since both would be the inputs to the GANs, and HX4-PET-reg to be the ground-truth given these inputs. And since HX4-PET-reg contained registration imperfections as seen in Figure \ref{fig:reg_images}, the HX4-PET-unreg instead would be used in the unpaired CycleGAN training to sidestep this issue. The \textit{unregistered} ldCT, \textit{ldCT-unreg}, would play a crucial role in the modified CycleGAN system as discussed further in \ref{data_requirements}, and hence was not discarded. However, the \textit{registered} ldCT wouldn't be required anymore beyond this point since its sole purpose was to aid in the registration of HX4-PET, and was thus discarded.
 
 
 % --------------------------------
@@ -91,7 +91,7 @@ HX4-PET-unreg images, however, were represented in terms of the non-standard CNT
     \label{fig:data_proc_overview_1}
 \end{figure}
 
-Following this, the FDG-PET, HX4-PET-unreg, pCT and the tumor and body masks were converted to SimpleITK objects in Python. The ldCT-unreg was also loaded using PyDicom and converted to this representation. HX4-PET-reg, stored in .mhd/.raw format containing pre-computed SUV values, was directly loaded into a SimpleITK object. Figure \ref{fig:data_proc_overview_1} shows a visual overview of these steps.
+Following this, the FDG-PET, HX4-PET-unreg, pCT and the tumor and body masks were converted to SimpleITK objects in Python. The ldCT-unreg was also loaded using PyDicom and converted to this representation. HX4-PET-reg, stored in \textit{.mhd/.raw} format containing pre-computed SUV values, was directly loaded into a SimpleITK object. Figure \ref{fig:data_proc_overview_1} shows a visual overview of these steps.
 
 
 \subsubsection{Cropping and Resampling}
@@ -129,27 +129,20 @@ The second data processing phase involved cropping and resampling the loaded ima
     \label{fig:data_proc_overview_2}
 \end{figure}
 
-Finally, all the processed images were saved as .nrrd files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far.
-
-
+Finally, all the processed images were saved as \textit{.nrrd} files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin, as a single file. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far.
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{GAN Systems}
 \label{GAN_Systems}
-% Pix2Pix as the simplest possible general system for image-to-image regression
-% CycleGAN as an unpaired solution, can potentially circumvent problems with reg errors
-% CyclaGAN-balanced - an improved design for unpaired training for HX4 PET translation
-% Data requirements - which images used where
-
-This section describes the image translation GAN systems used in our study. Throughout this section, domain \textit{A} will be used to represent the domain of valid multimodal FDG-PET/pCT images (i.e. the source domain), and domain \textit{B} to represent that of the HX4-PET images (i.e. the target domain). The synthesized HX4-PET image will be denoted as \textit{HX4-PET-syn}.
+This section describes the image translation GAN systems used in our study. Throughout this section, domain \textit{A} is be used to represent the domain of valid multimodal FDG-PET/pCT images, and \textit{B} to represent the domain of the HX4-PET images. Synthetic HX4-PET images are denoted as \textit{HX4-PET-syn}.
 
 
 % ------------------
 \subsection{Pix2Pix}
 \label{pix2pix}
-The Pix2Pix framework provides a simple and straightforward image translation method, given that the images in domain \textit{A} and domain \textit{B} in the training dataset are paired and have pixel-wise correspondence. The Pix2Pix generator is a deep neural network that takes as input an image and outputs an image of the same size, and the discriminator is a classifier network that takes image input and produces a scalar value or a downsampled map of scalar values (see further in \ref{network_architectures}). For some \textit{A}-to-\textit{B} cross-domain translation task, it is first assumed that an \textit{A}-to-\textit{B} mapping exists. The generator models this relationship and the discriminator models the conditional probability that an image belongs to domain \textit{B}, given its counterpart from domain \textit{A}. During training, the generated domain \textit{B} images are evaluated by the conditional discriminator, and this adversarial feedback is used to improve the generator's performance. Additionally, Pix2Pix uses a pixel-wise loss to directly enforce similarity between the synthetic and the ground-truth domain \textit{B} images. For a generator $G$ and a discriminator $D$, Equation \ref{eq:pix2pix_loss_components} shows the components of each of their loss functions. 
+The Pix2Pix framework provides a simple and straightforward image translation method, provided the images in domain \textit{A} and domain \textit{B} in the training dataset are paired and have pixel-wise correspondence. The Pix2Pix generator is a deep neural network that takes as input an image and outputs an image of the same size, and the discriminator is a classifier network that takes image input and outputs a scalar value or a downsampled map of scalar values (see further in \ref{network_architectures}). For some \textit{A}-to-\textit{B} cross-domain translation task, it is first assumed that an \textit{A}-to-\textit{B} mapping exists. The generator models this relationship between the domains and the discriminator models the conditional probability that an image belongs to domain \textit{B}, given its counterpart from domain \textit{A}. During training, the generated domain \textit{B} images are evaluated by the conditional discriminator, and its adversarial feedback is used to improve the generator's performance. Additionally, Pix2Pix uses a pixel-wise loss to directly enforce similarity between the synthetic and the ground-truth domain \textit{B} images. For a generator $G$ and a discriminator $D$, Equation \ref{eq:pix2pix_loss_components} shows the components of each of their loss functions. 
 
 \begin{equation}
     \begin{aligned}
@@ -160,7 +153,7 @@ The Pix2Pix framework provides a simple and straightforward image translation me
 \end{equation}
 $G$ has two loss components -- an adversarial loss $L_{adv}(G)$ and an element-wise loss $L_{elem}(G)$. Loss for $D$ is a single adversarial loss $L_{adv}(D)$ which is a counterpart of $L_{adv}(G)$. In $G$, $L_{adv}(G)$ can be viewed as a ``structured" loss that is learned from the data itself as a result of the adversarial setting and can produce images with sharp and fine structures, whereas $L_{elem}(G)$ emphasizes on preserving larger and lower-frequency components of the images. The hyperparameter $\lambda$ can be used to adjust the balance of importance between the two terms depending on the specific application.
 
-We use the least-squares adversarial loss, instead of the original cross-entropy loss, as it is known to improve training stability \cite{mao2017least}. Similar to the original Pix2Pix paper \cite{isola2017image}, we implement $L_{elem}(G)$ using pixel-wise (voxel-wise in 3D) L1 loss. Equation \ref{eq:pix2pix_loss_expansion} shows the expansion of each of these loss terms.
+We use the least-squares version of the adversarial loss, instead of the original cross-entropy loss, as it is known to improve training stability \cite{mao2017least}. Similar to the original Pix2Pix framework \cite{isola2017image}, we implement $L_{elem}(G)$ as pixel-wise (voxel-wise in 3D) L1 loss. Equation \ref{eq:pix2pix_loss_expansion} shows the expansion of each of these loss terms.
 
 \begin{equation}
     \begin{aligned}
@@ -175,7 +168,7 @@ where $x$ and $y$ are random variables representing samples from domain \textit{
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=\linewidth]{figures/GANs/Pix2Pix.jpg}
+    \includegraphics[width=\linewidth]{figures/GANs/Pix2Pix.png}
     \caption{Pix2Pix training phases. \textit{G} and \textit{D} are updated in an alternating manner. In practice, FDG-PET and pCT images were stacked channel-wise and given as input to \textit{G}. And in \textit{D}, the conditioning was implemented by channel-wise stacking the HX4-PET-reg or HX4-PET-syn with FDG-PET and pCT.}
     \label{fig:pix2pix}
 \end{figure}{}
@@ -187,13 +180,52 @@ In our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical
 \subsection{CycleGAN}
 \label{cyclegan}
 
-\subsubsection{CycleGAN-naive}
+CycleGAN addresses unpaired image translation problems where \textit{A}-\textit{B} image pairs are not provided in the training set. It is first assumed that there exists some relationship between domain \textit{A} and domain \textit{B}, and that this relationship is bijective in nature. In other words, for an \textit{A}$\rightarrow$\textit{B}transformation, an inverse \textit{B}$\rightarrow$\textit{A} transformation exists. CycleGAN aims at modeling these two mappings simultaneously by incorporating cycle-consistency. The GAN system consists of two generators -- $G_{AB}$ and $G_{BA}$ -- that implement the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings, respectively. Two discriminators $D_B$ and $D_A$ are adversarially coupled with the respective two generators. Note that unlike Pix2Pix, CyclaGAN's discriminators are not conditioned on input images as this is not possible with unpaired training data. Equations \ref{eq:cyclegan_naive_loss_components} shows the generator and discriminator loss terms.
+
+\begin{equation}
+    \begin{aligned}
+    L(G_{AB}, G_{BA}) &= L_{adv}(G_{AB}) + L_{adv}(G_{BA}) + \lambda L_{cyc}(G_{AB}, G_{BA}) \\[1mm]
+    L(D_B, D_A) &= L_{adv}(D_B) + L_{adv}(D_A)
+    \end{aligned}
+    \label{eq:cyclegan_naive_loss_components}
+\end{equation}
+The adversarial loss term $L_{adv}(G_{AB})$ of $G_{AB}$ is coupled with $L_{adv}(D_B)$ of $D_B$ and encourages $G_{AB}$ to produce images resembling domain \textit{B} samples. Similarly, $L_{adv}(G_{BA})$ and $L_{adv}(D_A)$ are counterparts of each other and drive $G_{BA}$ to produce images indistinguishable from domain \textit{A}. Note that it is possible for a generator to satisfy its adversarial constraints by translating its input image from its source domain to just \textit{any} image that would seem as a sample from its target domain, whether or not the translated image preserves the contents of the input image. The cycle-consistency term $L_{cyc}(G_{AB}, G_{BA})$ is an indirect content-preservation criterion that constrains $G_{AB}$ and $G_{BA}$ to preserve the semantics across translation, and thus complements the adversarial losses. 
+
+Let $x \sim p_{data}(x)$ represent the random variable associated with domain \textit{A} which follows the distribution $p_{data}(x)$. Similarly, let $y \sim p_{data}(y)$ be the random variable associated with the domain \textit{B} distribution. Equations \ref{eq:cyclegan_naive_loss_expansion} show each of the loss terms in expanded form.
+
+\begin{equation}
+    \begin{aligned}
+    L_{adv}(G_{AB}) &= E_{x \sim p_{data}(x)} [(1 - D_B(G_{AB}(x)))^2]  \\[1mm]
+    L_{adv}(D_B) &= E_{x \sim p_{data}(x)} [D_B(G_{AB}(x))^2] + E_{y \sim p_{data}(y)} [(1 - D_B(y))^2] \\[4mm]
+    L_{adv}(G_{BA}) &= E_{y \sim p_{data}(y)} [(1 - D_A(G_{BA}(y)))^2]  \\[1mm]
+    L_{adv}(D_A) &= E_{y \sim p_{data}(y)} [D_A(G_{BA}(y))^2] + E_{x \sim p_{data}(x)} [(1 - D_A(x))^2] \\[4mm]
+    L_{cyc}(G_{AB}, G_{BA}) &= E_{x \sim p_{data}(x)} [|| x - G_{BA}(G_{AB}(x)) ||_1]  \\
+                            &+ E_{y \sim p_{data}(y)} [|| y - G_{AB}(G_{BA}(y)) ||_1] 
+    \end{aligned}
+    \label{eq:cyclegan_naive_loss_expansion}
+\end{equation}
+
+Cycle-consistency loss $L_{cyc}(G_{AB}, G_{BA})$ forces the an image and its reconstruction to be as close as possible in L1 sense. This is applied for both \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} and \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycles.
+Figure \ref{fig:cyclegan_concept} shows a simplified conceptual diagram of CycleGAN training.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/GANs/cyclegan_concept.png}
+    \caption{Simplified representation of CycleGAN training, figure adapted from the original paper \cite{zhu2017unpaired} with notations changed. (a) $G_{AB}$ models \textit{A}$\rightarrow$\textit{B} mapping and $G_{BA}$ its inverse. $D_B$ and $D_A$ are domain \textit{B} and \textit{A} discriminators, respectively. (b) In the \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, a domain \textit{A} image $x$ is translated to a representation \textit{$\hat{y} = G_{AB}(x)$} in domain \textit{B}, which is evaluated by $D_B$. It is then used to obtain a reconstruction $x' = G_{BA}(G_{AB}(x))$ of the original image $x$ which is forced by the cycle-consistency to be similar to $x$. (c) The \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle.}
+    \label{fig:cyclegan_concept}
+\end{figure}
+
+
+\subsubsection{CycleGAN-naive: Default CycleGAN applied to HX4-PET synthesis problem}
+
+We investigated unpaired FDG-PET/pCT to HX4-PET translation using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our medical image translation problem is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive.
+
 
 \begin{figure}[h!]
     \centering
     \makebox[\textwidth][c]
     {
-        \includegraphics[width=1.4\linewidth]{figures/GANs/CycleGAN-naive.jpg}
+        \includegraphics[width=1.5\linewidth]{figures/GANs/CycleGAN-naive.png}
     }
     \caption{CycleGAN-naive training phases. ...}
     \label{fig:cyclegan_naive}
@@ -201,13 +233,13 @@ In our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical
 
 
 
-\subsubsection{CycleGAN-balanced}
+\subsubsection{CycleGAN-balanced: An improved design}
 
 \begin{figure}[h!]
     \centering
     \makebox[\textwidth][c]
     {
-        \includegraphics[width=1.4\linewidth]{figures/GANs/CycleGAN-balanced.jpg}
+        \includegraphics[width=1.5\linewidth]{figures/GANs/CycleGAN-balanced.png}
     }
     \caption{CycleGAN-balanced training phases. ...}
     \label{fig:cyclegan_balanced}
@@ -217,9 +249,7 @@ In our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical
 % ---------------------------------------
 \subsection{Summary of Data Requirements}
 \label{data_requirements}
-Given all the different images available for each patient, it is important to clarify each of their purpose and roles they would play, i.e. which images are to be used for what. In this study, three different GAN based image-to-image translation methods will be investigated -- \textit{Pix2Pix}, \textit{CycleGAN-naive} and \textit{CycleGAN-balanced}. While \textit{CycleGAN-naive} is the out-of-the-box application of the CycleGAN approach for this task, \textit{CycleGAN-balanced} is a modified design tailored specifically for this problem. Figure \ref{fig:which_images_where} illustrates the roles of each image in the training and validation of the three GAN models.
-
-\todo{Update this}
+\todo{Write this}
 
 \begin{figure}[h!]
     \centering
