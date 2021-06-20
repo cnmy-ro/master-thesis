@@ -325,7 +325,8 @@ Let \textit{Ck} denote a block composed on Convolution-InstanceNorm-LeakyReLU wh
     \caption{The first discriminator block C64 takes as input a single channel image (except of $D_A$ of CycleGAN-naive which requires two-channel input). The last block C1 always outputs a single-channel validity score map. Blocks 1, 2 and 3 use a stride of 2$\times$2$\times$2 resulting in a downscaling of the image representation by a factor of 2, whereas blocks 4 and 5 uses a stride of 1$\times$1$\times$1.}
     \label{tab:discriminator_architecture}
 \end{table}
-As exceptions to the notation, instance normalization is not used in the first and the last blocks. Since we use the least-squares adversarial loss, the last block does not include an activation function and the final convolution layer's output map is considered as the discriminator's final output.
+As exceptions to the notation, instance normalization is not used in the first and the last blocks. Also, since we use the least-squares adversarial loss, the last block does not include an activation function and the final convolution layer's output map is considered as the discriminator's final output.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -354,12 +355,42 @@ The FDG-PET and pCT images comprise the model input. HX4-PET-reg is the ground t
 % Components of the Validation Pipeline -- patch based workflow, metric computation
 % Training time
 
+\subsubsection{Data pre-processing and normalization}
+Depending on the GAN, the required training images as well as the body mask are fetched from their \textit{.nrrd} form into the computer memory. The body mask is applied to pCT, FDG-PET and HX4-PET-reg (if using), and the out-of-the-body region intensities are set to zero signal value -- i.e. 0 SUV (zero activity) in the PET images and -1024 HU (value for air) in pCT. This body mask was obtained from the pCT (see \ref{Data_Processing}), and therefore, cannot be applied to the unregistered images. When performing unpaired training with HX4-PET-unreg and ldCT-unreg, the latter is used to automatically generate their own body mask via HU thresholding and morphological operations. This new body mask is then applied to HX4-PET-unreg (and ldCT-unreg, if using). Body masking is then followed by normalization. CT intensities are clipped and limited to the HU range [-1000, 2000] and linearly rescaled to range [-1, 1]. FDG-PET is clipped into the SUV range [0, 15] followed by rescaling to [-1, 1]. In case of HX4-PET images, following previous related work \cite{even2017predicting}, the SUV values were first divided by the mean SUV of the patient's aorta region. The resulting intensity representation ($\frac{SUV}{SUV_{aorta-mean}}$ ratio) has a special meaning when used in the context of the tumor, wherein it is referred to as the tumor-to-background ratio (TBR). Here, the aorta is considered the ``background" with respect to the tumor. This is a clinically useful intensity representation that has pre-defined standard thresholds \cite{zegers2013hypoxia} and can, hence, be used for hypoxia quantification during image evaluation (described further in Section \ref{Evaluation_Methods}). We perform this conversion step at the beginning of the training pipeline, instead of during the evaluation stage, because the aorta annotation wasn't provided in the dataset which makes it impossible to compute the $SUV_{aorta-mean}$ value directly from the HX4-PET images. These values were instead provided for each patient directly in a separate file, and we had to depend on them for SUV $\longleftrightarrow$ TBR conversion throughout the training and evaluation stages. Following the conversion of the body masked HX4-PET images into this intensity unit, the intensities were clipped to the range [0, 3] and rescaled to [-1, 1]. The aforementioned clipping ranges for FDG-PET SUV and HX4-PET TBR were because they covered most of the intensity variation in their respective images, especially in the tumor area.
+
+
+\subsubsection{Patch-based training}
+We use a patch-based training approach to cope with the high memory requirements of the GANs and with the small size of the training set. For each pre-processed image, a single 3D patch is extracted from the image and is used as to feed the model. The body mask is used to limit patch sampling to the body region to avoid extracting patches from the background, and the patches are sampled randomly with a uniform random distribution over the body region. We use a patch size of 128$\times$128$\times$32 voxels. During paired training, corresponding patches from the same physical position are extracted from the FDG-PET, pCT and HX4-PET-reg images. If $f_A$ and $f_B$ denote the position of focal points of the patches corresponding to domain \textit{A} and domain \textit{B} images, then in this case, $f_B = f_A$. Figure \ref{fig:paired_patch_sampling} shows a simplified visualization of the paired patch sampling process.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{figures/Data/patch_sampling/paired_patch_sampling.png}
+    \caption{...}
+    \label{fig:paired_patch_sampling}
+\end{figure}
+
+In case of unpaired training, a more complex sampling strategy is used instead of sampling patches randomly and independently from domain \textit{A} and domain \textit{B} images. This is to ensure a form of ``weak pairing" between the two sets of patches -- the anatomical region covered in their patches from \textit{A} images is roughly similar to the region covered by patches taken from \textit{B} image(s). 
+First, corresponding patches from the same randomly chosen location are extracted from FDG-PET and pCT. Let the location of the focal point of this patch be denoted as $f_A$. Then, exploiting the fact that all scans have the same patient orientation, an equivalent focal point $f_B$ is estimated for the HX4-PET-unreg (and its coupled ldCT-unreg, if using). $f_B$ is calculated such that its \textit{relative} position with respect to the volume size of the HX4-PET-unreg is same as the relative position of $f_A$ with respect to the volume size of FDG-PET/pCT. This is followed by defining a \textit{local sampling region} of size $l_x \times l_y \times l_z$ around $f_B$, then updating the $f_B$ by randomly sampling from this local sampling region. Let this new focal point be denoted as $f_B'$. Again, the condition is applied to $f_B'$ that it must lie within the patient's body region and not in the image background. This additional stochasticity is introduced in the process to account for possible variation in the body position and structure of \textit{A} and \textit{B} patients. Figure \ref{fig:unpaired_patch_sampling} shows a visual representation of the unpaired patch sampling process.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{figures/Data/patch_sampling/unpaired_patch_sampling.png}
+    \caption{``weak pairing" ...}
+    \label{fig:unpaired_patch_sampling}
+\end{figure}
+
+The local sampling region is specified as the fraction of the volume size of an HX4-PET-unreg image, and in our experiments, we use size 35\% $\times$ 35\% $\times$ 60\%. This relatively large size was set to provide sufficient freedom for a valid patch to be sampled from the full images which are themselves not very large in size. 
+
+
+\subsubsection{Patch-based validation}
+
+\subsubsection{Training time}
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Evaluation Methods}
-
+\label{Evaluation_Methods}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
