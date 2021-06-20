@@ -29,7 +29,7 @@ In the original dataset, each individual scan was stored as a separate DICOM ser
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/Data/original/N010-FDG_PET_pCT.png}
-    \caption{Single coronal (\textit{x}-\textit{z} plane) slice of FDG-PET and pCT images. White bounding boxes show their respective FOVs. Radiotherapy structure annotations were provided for pCT of which three are shown here -- the patient's body (green), the lungs (dark blue) and the primary tumor (red). FDG-PET shows high activity near the tumor region.}
+    \caption{Single coronal (\textit{x}-\textit{z} plane) slice of FDG-PET and pCT images. White bounding boxes show their respective FOVs. Radiotherapy structure annotations were provided for pCT of which three are shown here -- the patient's body (green), the lungs (dark blue) and the primary tumor (red). The FDG tracer has high specificity to metabolism, resulting in high contrast near the tumor.}
     \label{fig:original_fdgpet_pct}
 \end{figure}
 
@@ -142,7 +142,7 @@ This section describes the image translation GAN systems used in our study. Unle
 % ------------------
 \subsection{Pix2Pix}
 \label{pix2pix}
-The Pix2Pix framework provides a simple and straightforward image translation method, provided the images in domain \textit{A} and domain \textit{B} in the training dataset are paired and have pixel-wise correspondence. The Pix2Pix generator is a deep neural network that takes as input an image and outputs an image of the same size, and the discriminator is a classifier network that takes image input and outputs a scalar value or a downsampled map of scalar values (see further in \ref{network_architectures}). For some \textit{A}-to-\textit{B} cross-domain translation task, it is first assumed that an \textit{A}-to-\textit{B} mapping exists. The generator models this relationship between the domains and the discriminator models the conditional probability that an image belongs to domain \textit{B}, given its counterpart from domain \textit{A}. During training, the generated domain \textit{B} images are evaluated by the conditional discriminator, and its adversarial feedback is used to improve the generator's performance. Additionally, Pix2Pix uses a pixel-wise loss to directly enforce similarity between the synthetic and the ground-truth domain \textit{B} images. For a generator $G$ and a discriminator $D$, Equation \ref{eq:pix2pix_loss_components} shows the components of each of their loss functions. 
+The Pix2Pix framework provides a simple and straightforward image translation method, provided the images in domain \textit{A} and domain \textit{B} in the training dataset are paired and have pixel-wise correspondence. The Pix2Pix generator is a deep neural network that takes as input an image and outputs another image of the same size, and the discriminator is a classifier network that takes image input and outputs a scalar value or a downsampled map of scalar values (see further in \ref{network_architectures}). For some \textit{A}-to-\textit{B} cross-domain translation task, it is first assumed that an \textit{A}-to-\textit{B} mapping exists. The generator models this relationship between the domains and the discriminator models the conditional probability that an image belongs to domain \textit{B}, given its counterpart from domain \textit{A}. During training, the generated domain \textit{B} images are evaluated by the conditional discriminator, and its adversarial feedback is used to improve the generator's performance. Additionally, Pix2Pix uses a pixel-wise loss to directly enforce similarity between the synthetic and the ground-truth domain \textit{B} images. For a generator $G$ and a discriminator $D$, Equations \ref{eq:pix2pix_loss_components} show the components of each of their loss functions. 
 
 \begin{equation}
     \begin{aligned}
@@ -151,9 +151,9 @@ The Pix2Pix framework provides a simple and straightforward image translation me
     \end{aligned}
     \label{eq:pix2pix_loss_components}
 \end{equation}
-$G$ has two loss components -- an adversarial loss $L_{adv}(G)$ and an element-wise loss $L_{elem}(G)$. Loss for $D$ is a single adversarial loss $L_{adv}(D)$ which is a counterpart of $L_{adv}(G)$. In $G$, $L_{adv}(G)$ can be viewed as a ``structured" loss that is learned from the data itself as a result of the adversarial setting and can produce images with sharp and fine structures, whereas $L_{elem}(G)$ emphasizes on preserving larger and lower-frequency components of the images. The hyperparameter $\lambda$ can be used to adjust the balance of importance between the two terms depending on the specific application.
+$G$ has two loss components -- an adversarial loss $L_{adv}(G)$ and an element-wise loss $L_{elem}(G)$. Loss for $D$ is a single adversarial loss $L_{adv}(D)$ which is a counterpart of $L_{adv}(G)$. For the generator, $L_{adv}(G)$ can be viewed as a ``structured" loss that is learned from the data itself as a result of the adversarial setting and can produce images with sharp and fine structures, whereas $L_{elem}(G)$ emphasizes on the fidelity of larger and lower-frequency components of the images. The hyperparameter $\lambda$ can be used to adjust the balance of importance between the two terms depending on the specific application.
 
-We use the least-squares version of the adversarial loss, instead of the original cross-entropy loss, as it is known to improve training stability \cite{mao2017least}. Similar to the original Pix2Pix framework \cite{isola2017image}, we implement $L_{elem}(G)$ as pixel-wise (voxel-wise in 3D) L1 loss. Equation \ref{eq:pix2pix_loss_expansion} shows the expansion of each of these loss terms.
+We use the least-squares version of the adversarial loss, instead of the original cross-entropy loss, as it is known to improve training stability \cite{mao2017least}. Similar to the original Pix2Pix framework \cite{isola2017image}, we implement $L_{elem}(G)$ as pixel-wise (voxel-wise in 3D) L1 loss. Equations \ref{eq:pix2pix_loss_expansion} show the expansion of each of these loss terms.
 
 \begin{equation}
     \begin{aligned}
@@ -164,7 +164,7 @@ We use the least-squares version of the adversarial loss, instead of the origina
     \label{eq:pix2pix_loss_expansion}
 \end{equation}
 
-where $x$ and $y$ are random variables representing samples from domain \textit{A} and \textit{B}, respectively, and the joint data distribution is denoted by $x,y \sim p_{data}(x,y)$. The adversarial objectives of $G$ and $D$ -- $L_{adv}(G)$ and $L_{adv}(D)$ -- are conflicting. For a given $D$, $G$ learns to synthesize images that $D$ would evaluate as real data samples (with a value of 1). Whereas, for a given $G$, $D$ learns to correctly distinguish between the synthetic samples (with a value of 0) and the real samples (with a value of 1). During training, $G$ and $D$ are updated in an alternating fashion.
+where $x$ and $y$ are random variables representing samples from domain \textit{A} and \textit{B}, respectively, and the joint data distribution is denoted by $x,y \sim p_{data}(x,y)$. The adversarial objectives of $G$ and $D$ -- $L_{adv}(G)$ and $L_{adv}(D)$ -- are conflicting. For a given $D$, $G$ learns to synthesize images that $D$ would evaluate as real data samples (with value 1). Whereas, for a given $G$, $D$ learns to correctly distinguish between the synthetic samples (with value 0) and the real samples (with value 1). During training, $G$ and $D$ are updated in an alternating fashion.
 
 \begin{figure}[h!]
     \centering
@@ -180,7 +180,7 @@ In our problem task, we applied Pix2Pix in a 3D manner on the volumetric medical
 \subsection{CycleGAN}
 \label{cyclegan}
 
-CycleGAN addresses unpaired image translation problems where \textit{A}-\textit{B} image pairs are not provided in the training set. It is first assumed that there exists some relationship between domain \textit{A} and domain \textit{B}, and that this relationship is bijective in nature. In other words, for an \textit{A}$\rightarrow$\textit{B}transformation, an inverse \textit{B}$\rightarrow$\textit{A} transformation exists. CycleGAN aims at modeling these two mappings simultaneously by incorporating cycle-consistency. The GAN system consists of two generators -- $G_{AB}$ and $G_{BA}$ -- that implement the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings, respectively. Two discriminators $D_B$ and $D_A$ are adversarially coupled with the respective two generators. Note that unlike Pix2Pix, CyclaGAN's discriminators are not conditioned on input images as this is not possible with unpaired training data. Equations \ref{eq:cyclegan_naive_loss_components} shows the generator and discriminator loss terms.
+CycleGAN addresses unpaired image translation problems where \textit{A}-\textit{B} image pairs are not provided in the training set. It is first assumed that there exists some relationship between domain \textit{A} and domain \textit{B}, and that this relationship is bijective in nature. In other words, for an \textit{A}$\rightarrow$\textit{B}transformation, an inverse \textit{B}$\rightarrow$\textit{A} transformation exists. CycleGAN aims at modeling these two mappings simultaneously by incorporating cycle-consistency. The GAN system consists of two generators -- $G_{AB}$ and $G_{BA}$ -- that implement the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings, respectively. Two discriminators $D_B$ and $D_A$ are adversarially coupled with the respective two generators. Note that unlike Pix2Pix, CyclaGAN's discriminators are not conditioned on input images as this is not possible with unpaired training data. Equations \ref{eq:cyclegan_naive_loss_components} show the generator and discriminator loss terms.
 
 \begin{equation}
     \begin{aligned}
@@ -189,9 +189,9 @@ CycleGAN addresses unpaired image translation problems where \textit{A}-\textit{
     \end{aligned}
     \label{eq:cyclegan_naive_loss_components}
 \end{equation}
-The adversarial loss term $L_{adv}(G_{AB})$ of $G_{AB}$ is coupled with $L_{adv}(D_B)$ of $D_B$ and encourages $G_{AB}$ to produce images resembling domain \textit{B} samples. Similarly, $L_{adv}(G_{BA})$ and $L_{adv}(D_A)$ are counterparts of each other and drive $G_{BA}$ to produce images indistinguishable from domain \textit{A}. Note that it is possible for a generator to satisfy its adversarial constraints by translating its input image from its source domain to just \textit{any} image that would seem as a sample from its target domain, whether or not the translated image preserves the contents of the input image. The cycle-consistency term $L_{cyc}(G_{AB}, G_{BA})$ is an indirect content-preservation criterion that constrains $G_{AB}$ and $G_{BA}$ to preserve the semantics across translation, and thus complements the adversarial losses. 
+The adversarial loss term $L_{adv}(G_{AB})$ of $G_{AB}$ is coupled with $L_{adv}(D_B)$ of $D_B$ and encourages $G_{AB}$ to produce images resembling domain \textit{B} samples. Similarly, $L_{adv}(G_{BA})$ and $L_{adv}(D_A)$ are counterparts of each other and drive $G_{BA}$ to produce images indistinguishable from domain \textit{A}. Note that it is possible for a generator to satisfy its adversarial constraints by translating its input image from its source domain to just \textit{any} image that would seem as a sample from its target domain, whether or not the translated image preserves the contents of the input image. The cycle-consistency term $L_{cyc}(G_{AB}, G_{BA})$ is an indirect content-preservation criterion that constrains $G_{AB}$ and $G_{BA}$ to preserve the high-level structure across translation, and thus complements the adversarial losses. 
 
-Let $x \sim p_{data}(x)$ represent the random variable associated with domain \textit{A} which follows the distribution $p_{data}(x)$. Similarly, let $y \sim p_{data}(y)$ be the random variable associated with the domain \textit{B} distribution. Equations \ref{eq:cyclegan_naive_loss_expansion} show each of the loss terms in expanded form.
+Let $x \sim p_{data}(x)$ represent the random variable associated with domain \textit{A} following a distribution $p_{data}(x)$. Similarly, let $y \sim p_{data}(y)$ be the random variable associated with the domain \textit{B} distribution. Equations \ref{eq:cyclegan_naive_loss_expansion} show each of the loss terms in expanded form.
 
 \begin{equation}
     \begin{aligned}
@@ -205,8 +205,7 @@ Let $x \sim p_{data}(x)$ represent the random variable associated with domain \t
     \label{eq:cyclegan_naive_loss_expansion}
 \end{equation}
 
-Cycle-consistency loss $L_{cyc}(G_{AB}, G_{BA})$ forces the an image and its reconstruction to be as close as possible in L1 sense. This is applied for both \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} and \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycles.
-Figure \ref{fig:cyclegan_concept} shows a simplified conceptual diagram of CycleGAN training.
+Cycle-consistency loss $L_{cyc}(G_{AB}, G_{BA})$ encourages a reconstruction to be as close as possible to its original image in L1 sense, and is applied to both \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} and \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycles. Figure \ref{fig:cyclegan_concept} shows a simplified conceptual diagram of CycleGAN training.
 
 \begin{figure}
     \centering
@@ -218,7 +217,7 @@ Figure \ref{fig:cyclegan_concept} shows a simplified conceptual diagram of Cycle
 
 \subsubsection{CycleGAN-naive: Default CycleGAN applied to HX4-PET synthesis problem}
 
-We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our medical image translation problem is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive. 
+We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our use-case is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive. 
 
 \begin{figure}[h!]
     \centering
@@ -230,25 +229,25 @@ We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. T
     \label{fig:cyclegan_naive}
 \end{figure}{}
 
-We argue that CycleGAN-naive has several drawbacks, and hence, is not an optimal implementation of CycleGAN for our use-case. In the \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, $G_{AB}$ takes as input FDG-PET and pCT to output HX4-PET-syn, and $G_{BA}$ uses HX4-PET-syn to reconstruct FDG-PET and pCT. While the task $G_{AB}$ is realistic since hypoxia patterns can be reliably predicted from the inputs and therefore has a physiological basis (see \ref{Related_Work-hypoxia_prediction}), the task $G_{BA}$ is not reasonable. It is not possible to precisely predict a patient's anatomy (CT) as well as their metabolism levels (FDG) from just the hypoxia information, and the CT modality is of more concern here. A CT image contains highly detailed structural information with sharp and fine features, whereas PET images are functional heatmaps having blurred and diffused characteristics. $G_{BA}$ cannot accurately recreate pCT from HX4-PET-syn unless $G_{AB}$ encodes the CT information into the latter in the form of noise. But, then the HX4-PET-syn image would not resemble a clinically acquired HX4-PET scan. Therefore, cycle-consistency constraint conflicts the domain \textit{B} adversarial criterion instead of complementing it. Now looking at the \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle, the task of $G_{BA}$ is to compute realistic FDG-PET and pCT given only the real HX4-PET-unreg image, which it can perform, especially in pCT, by hallucinating the patient's anatomy. However, in that case, $G_{AB}$ would need to use this fake information to precisely reconstruct the HX4-PET-unreg. Because the task of $G_{AB}$ is to correctly predict hypoxia based on given CT (and FDG-PET) information, it is unreasonable to provide it with fake anatomical information and expect it to predict hypoxia patterns from it that match the real HX4-PET-unreg. Hence, in this cycle as well, cycle-consistency requirement conflicts with adversarial objective. Based on these reasons, we believe that CycleGAN, in its default form, cannot tackle the problem task, and that a more intelligent strategy is required.
+We argue that CycleGAN-naive has several drawbacks, and hence, is not an optimal implementation of CycleGAN for our use-case. In the \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, $G_{AB}$ takes as input FDG-PET and pCT to output HX4-PET-syn, and $G_{BA}$ uses HX4-PET-syn to reconstruct FDG-PET and pCT. The learning task $G_{AB}$ is realistic since hypoxia patterns can be reliably predicted from the inputs, and therefore, has a physiological basis (see \ref{Related_Work-hypoxia_prediction}) However, the learning task of $G_{BA}$ is not reasonable. It is not possible to precisely predict a patient's anatomy (CT) as well as their metabolism levels (FDG) from just the hypoxia information, and the CT modality is of more concern to our discussion. A CT image contains highly detailed structural information with sharp and fine features, whereas PET images are functional heatmaps having blurred and diffused characteristics. $G_{BA}$ cannot accurately recreate pCT from HX4-PET-syn unless $G_{AB}$ encodes the CT information into the latter in the form of noise. But, then the HX4-PET-syn image would not resemble a clinically acquired HX4-PET scan. Therefore, cycle-consistency constraint conflicts with the domain \textit{B} adversarial criterion instead of complementing it. Now looking at the \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle, the task of $G_{BA}$ is to compute realistic FDG-PET and pCT given only the real HX4-PET-unreg image, which it can perform, especially for pCT, by hallucinating the patient's anatomy. However, in that case, $G_{AB}$ would be given this fake information to precisely reconstruct the HX4-PET-unreg. Because the task of $G_{AB}$ is to correctly predict hypoxia based on given CT (and FDG-PET) information, it is unreasonable to provide it with fake anatomical information and expect it to predict hypoxia patterns from it that match the real HX4-PET-unreg. Hence, in this cycle as well, cycle-consistency requirement conflicts with adversarial objective. The fundamental assumption of a bijective relationship between domains \textit{A} and \textbf{B} made by CycleGAN does not hold here, and the resulting images are likely to be highly inaccurate and not representative of the patient's condition. Based on these reasons, we believe that CycleGAN, in its default form, cannot tackle the problem task, and that a more intelligent strategy is required.
 
 
 \subsubsection{CycleGAN-balanced: An improved design}
 
-We propose a custom design improvement to CycleGAN training to make the system more optimized for our use-case. In PET acquisition, CT scan plays an important role of providing material density information which is used to provide density-correction to the recorded PET intensities. We utilize the fact that an HX4-PET scan is always acquired together with a CT scan which, in our dataset, is a low-dose CT (ldCT). Since the model training is unpaired, the ldCT-unreg images are included in the training data. 
+We propose a custom design improvement to CycleGAN training to make the system more optimized for our use-case. In PET acquisition, CT scan plays an important role of providing material density information which is used to apply density-correction to the recorded PET intensities. We utilize the fact that an HX4-PET scan is always acquired together with a CT scan which, in our dataset, is a low-dose CT (ldCT). Model training is unpaired similar to CycleGAN-naive, and the ldCT-unreg images are included in the training data accompanying their corresponding HX4-PET-unreg images. 
 
-To begin with, we slightly tweak what the domains \textit{A} and \textbf{B} represent here -- let \textit{A} be the domain of FDG-PET images and \textit{B} of HX4-PET images. The CT images -- pCT and ldCT -- are then considered ``supporting" images that provide anatomical context to the generators. Note that pCT has voxel-wise correspondence only with FDG-PET, and ldCT-unreg is aligned only with HX4-PET-unreg. Now, the task of the generators is to take as input a PET image from its source domain and to compute its target domain PET image, while being supplied anatomical context using the available CT image (one that is aligned with the source domain PET). To elaborate on this, let us again consider the two cycles separately: 
-
-\vspace{4mm}
-\noindent
-\textit{A$\rightarrow$B$\rightarrow$A cycle}: Here, pCT is the available CT image which accompanies the FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ uses the two images and computes HX4-PET-syn. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ now \textit{reuses} the pCT as a support image along with the HX4-PET-syn (note that the two are aligned) to reconstruct FDG-PET. The pCT provides the same anatomical context for FDG-PET reconstruction as it did for HX4-PET-syn prediction. The cycle-consistency loss is computed just for the FDG-PET and its reconstructed version. If the HX4-PET-syn represents a plausible hypoxia prediction, then the FDG-PET can be recovered from it up to a great extent since both have an underlying physiological relationship. Therefore, adversarial loss would drive $G_{AB}$ to produce realistic HX4-PET-syn image and the cycle-consistency would encourage this image to be representative of the patient's physiology. 
+To begin with, we slightly tweak what the domains \textit{A} and \textit{B} represent here -- let \textit{A} be the domain of FDG-PET images and \textit{B} of HX4-PET images. The CT images -- pCT and ldCT -- are then considered ``supporting" images that provide anatomical context to the generators. Note that pCT has voxel-wise correspondence only with FDG-PET, and ldCT-unreg is aligned only with HX4-PET-unreg. Now, the task of each generator is to take as input a PET image from its source domain and to compute its target domain PET image, while being supplied anatomical context using the available CT image (one that is aligned with the source domain PET). To elaborate on this, let us again consider the two cycles separately: 
 
 \vspace{4mm}
 \noindent
-\textit{B$\rightarrow$A$\rightarrow$B cycle}: In this case, ldCT-unreg is the available CT image that is coupled with the HX4-PET-unreg. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ uses these two images and computes an equivalent synthetic FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ reuses the ldCT-unreg and along with the synthetic FDG-PET (note that the ldCT-unreg and the synthetic FDG-PET are aligned), it reconstructs HX4-PET-unreg. Cycle-consistency is applied between the original and reconstructed HX4-PET-unreg. The same ldCT-unreg image provides anatomical context to FDG-PET synthesis and HX4-PET-unreg reconstruction, and if the synthetic FDG-PET represents plausible metabolism patterns, then HX4-PET-unreg can be mostly recovered. In this cycle as well, the adversarial and cycle-consistency objectives would behave in a reinforcing manner.
+\textit{A$\rightarrow$B$\rightarrow$A cycle}: Here, pCT is the available CT image which accompanies the FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ uses the two images and computes HX4-PET-syn. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ now \textit{reuses} the pCT as a support image along with the HX4-PET-syn (note that the two are aligned) to reconstruct FDG-PET. The pCT provides the same anatomical context for FDG-PET reconstruction as it did for HX4-PET-syn prediction. The cycle-consistency loss is computed between the FDG-PET and its reconstructed version. If the HX4-PET-syn represents a plausible hypoxia prediction, then the FDG-PET can be recovered from it up to a great extent since both have an underlying physiological relationship. Therefore, the adversarial loss would drive $G_{AB}$ to produce realistic HX4-PET-syn image and the cycle-consistency loss would encourage this image to be representative of the patient's physiology. 
 
 \vspace{4mm}
-The introduction of CT as input to both generators creates a balance between the complexities of the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings since none of them involves predicting fake CT information, all the while still relying on completely unpaired training data. We term this modified design as CycleGAN-balanced. Figure \ref{fig:cyclegan_balanced} shows a schematic of the training phases of its generators and discriminators.
+\noindent
+\textit{B$\rightarrow$A$\rightarrow$B cycle}: In this case, ldCT-unreg is the available CT image that is coupled with the HX4-PET-unreg. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ uses these two images and computes an equivalent synthetic FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ reuses the ldCT-unreg and along with the synthetic FDG-PET (note that the ldCT-unreg and the synthetic FDG-PET are aligned), it reconstructs HX4-PET-unreg. Cycle-consistency is applied between the original and reconstructed HX4-PET-unreg. The same ldCT-unreg image provides anatomical context for FDG-PET synthesis and for HX4-PET-unreg reconstruction, and if the synthetic FDG-PET represents plausible metabolism patterns, then HX4-PET-unreg can be mostly recovered. In this cycle as well, the adversarial and cycle-consistency objectives would behave in a mutually reinforcing manner.
+
+\vspace{4mm}
+The introduction of CT as input to both generators creates a balance between the complexities of the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings since none of them involves predicting fake CT information, all the while still relying on completely unpaired training data. We term this modified design as \textit{CycleGAN-balanced}. Figure \ref{fig:cyclegan_balanced} shows a schematic of the training phases of its generators and discriminators.
 
 \begin{figure}[h!]
     \centering
@@ -256,35 +255,105 @@ The introduction of CT as input to both generators creates a balance between the
     {
         \includegraphics[width=1.5\linewidth]{figures/GANs/CycleGAN-balanced.png}
     }
-    \caption{CycleGAN-balanced training phases. \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} translation tasks are balanced. In both cases, CT image modality is used only as input to supply anatomical information as a support to the input PET image, and the task of the generator is to predict a single output PET image by combining this information.}
+    \caption{CycleGAN-balanced training phases. \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} translation tasks are balanced. The CT images provide anatomical context to the generators. In \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, the pCT is used as an input by $G_{AB}$ and then reused by $G_{BA}$. In the \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle, the ldCT-unreg is the common CT image used by both the generators.}
     \label{fig:cyclegan_balanced}
 \end{figure}{}
 
-
-% ---------------------------------------
-\subsection{Summary of Data Requirements}
-\label{data_requirements}
-\todo{Write this}
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.95\linewidth]{figures/Data/which_images_where.png}
-    \caption{FDG-PET and pCT comprise the model input, which will be supplied to every model during training and validation. HX4-PET-reg is to serve as the ground truth hypoxia map and will be used for validating (and testing) all three models. It will also be used in the supervised training of the Pix2Pix model. The unregistered HX4-PET image will be used in the unpaired training of both the CycleGAN variants. Finally, only \textit{CycleGAN-balanced} will utilize the unregistered ldCT and only during training.}
-    \label{fig:which_images_where}
-\end{figure}
-
-
-% -------------------------------
-\subsection{Network Architecture}
-\label{network_architectures}
-
+Low-dose CT scans are characterized by higher amount of acquisition-related noise compared to routine- or high-dose CT scans (such as Planning CT). An additional, possibly desirable, consequence of exposing the two generators to both pCT and ldCT images during training is that the model is likely to learn effectively the relevant anatomical features while disregarding any pCT-specific or ldCT-specific noise signatures. That is, they are likely to generalize over both types of CT images.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Model Training Pipeline}
-% HX4-PET SUV normalization with SUVmean_aorta
+\section{Network Architecture}
+\label{network_architectures}
+The Pix2Pix, CycleGAN-naive and CycleGAN-balanced systems share the same generator and discriminator network architectures for the sake of fair comparison. The design choices of generator and discriminator architectures are based on specifications of the original Pix2Pix and CycleGAN frameworks \cite{isola2017image, zhu2017unpaired}, and use 3D equivalent of the 2D spatial operations.
+
+% --------------------
+\subsection{Generator}
+The generator network is based on the 3D U-Net architecture \cite{cciccek20163d}. 3D U-Net is a fully-convolutional network that takes as input a 3D volumetric image of arbitrary size and can produce an output image of the same size as the input. It consists of an \textit{analysis} path (or encoder) where hierarchical features are progressively extracted from the input image, and a \textit{synthesis} path (or decoder) which progressively constructs the output image from the features. A desirable property of the U-Net is its use of skip connections that transport features of each abstraction level directly into the synthesis path enabling it to utilize both high- and low-level features to synthesize the output, as opposed to a traditional encoder-decoder network without skip-connections which needs to depend on the features of its highest level of abstraction (i.e. features from its ``bottleneck" ). In many image translation problems, the input and target domain images often share low-level information up to a large extent. The U-Net is known to produce better quality images \cite{isola2017image} in such cases compared to the encoder-decoder architecture.
+
+Loosely based on the notation used in \cite{isola2017image}, let \textit{Enc-Ck} represent an encoder block composed of Convolution-InstanceNorm-LeakyReLU layers where the convolution operation uses \textit{k} 3D kernels each of size 4$\times$4$\times$4 and applied with a stride 2$\times$2$\times$2 and zero padding of 1 at each side of the input along each axis. The Leaky ReLU uses a negative side slope of 0.2. For the decoder, let \textit{Dec-Tk} represent a block comprising of TransposedConvolution-InstanceNorm-ReLU layers where the 3D upsampling transposed convolution uses \textit{k} kernels of size 4$\times$4$\times$4, stride 2$\times$2$\times$2 and input padding of 1 at each side along each axis. With the given configuration, the encoder downsamples the image representation by a factor of 2 at every stage and the decoder upsamples it by the same factor. 
+The structure of the U-Net encoder and decoder is as shown in Table \ref{tab:generator_architecture}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{Encoder block number} & \textbf{Encoder block} & \textbf{Decoder block} \\
+        \hline
+        1     & Enc-C64          & Dec-T1           \\
+        \hline
+        2     & Enc-C128         & Dec-T64          \\
+        \hline
+        3     & Enc-C256         & Dec-T128         \\
+        \hline
+        4     & Enc-C512         & Dec-T256         \\
+        \hline
+        5     & Enc-C512         & Dec-T512         \\
+        \hline
+    \end{tabular}
+    \caption{The first encoder block Enc-C64 accepts a two-channel input image and the encoder path processes the image from block number 1 to 5. The first decoder block Dec-T512 is in correspondence with the last encoder block Enc-C512, and the decoder path performs computation starting from Dec-T512 to Dec-T1 , ultimately producing a single channel output image. An exception to the U-Net's input and output channels appears in CycleGAN-naive, where the generator $G_{BA}$ needs a single channel input and produces a two-channel output.}
+    \label{tab:generator_architecture}
+\end{table}
+
+There are two exceptions to the aforementioned block notations. The first encoder block (Enc-C64) and the last decoder block (Dec-T1) do not use instance normalization. And the latter uses the Tanh activation function to output an image with continuous intensity values in the range (-1, 1). 
+
+
+% ------------------------
+\subsection{Discriminator}
+We use the 3D PatchGAN architecture for our discriminator. The network is essentially a convolutional classifier which, instead of computing a single validity score for an image (0 if fake, 1 if real), evaluates independent scores for fixed-size local regions (patches) of the image. It, therefore, encourages the synthetic images to not only resemble the target domain at the global level, but also for its local high-frequency structures to reflect the characteristics of the domain. PatchGAN discriminator of a fixed architecture can take an input image of arbitrary size and produces output map who size depends on the input image size, while each output unit's \textit{receptive field} size is constant with respect to the input image. The receptive field size can be increased by increasing the depth of the network.
+
+Let \textit{Ck} denote a block composed on Convolution-InstanceNorm-LeakyReLU where the 3D convolution layer uses \textit{k} spatial filters of size 4$\times$4$\times$4 and input padding of 1 at each side along each axis, and Leaky ReLU has a negative side slope of 0.2. The exact discriminator architecture is then shown in Table \ref{tab:discriminator_architecture}. Under this configuration, the receptive field of each output unit is 70$\times$70$\times$70 voxels on the input image.
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        \textbf{Block number} & \textbf{Discriminator block}\\
+        \hline
+        1     & C64       \\
+        \hline
+        2     & C128      \\
+        \hline
+        3     & C256      \\
+        \hline 
+        4     & C512      \\
+        \hline
+        5     & C1        \\
+        \hline
+    \end{tabular}
+    \caption{The first discriminator block C64 takes as input a single channel image (except of $D_A$ of CycleGAN-naive which requires two-channel input). The last block C1 always outputs a single-channel validity score map. Blocks 1, 2 and 3 use a stride of 2$\times$2$\times$2 resulting in a downscaling of the image representation by a factor of 2, whereas blocks 4 and 5 uses a stride of 1$\times$1$\times$1.}
+    \label{tab:discriminator_architecture}
+\end{table}
+As exceptions to the notation, instance normalization is not used in the first and the last blocks. Since we use the least-squares adversarial loss, the last block does not include an activation function and the final convolution layer's output map is considered as the discriminator's final output.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Model Training}
+
+
+% --------------------------------------------
+\subsection{Overview of the Data Requirements}
+\label{data_requirements}
+Figure \ref{fig:which_images_where} provides a visual overview of the data requirements of each GAN system to clarify which image type is used where, much of which is covered in detail earlier in Section \ref{GAN_Systems} for each individual GAN.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/Data/which_images_where.png}
+    \caption{Overview of data requirements of the GAN systems.}
+    \label{fig:which_images_where}
+\end{figure}
+
+The FDG-PET and pCT images comprise the model input. HX4-PET-reg is the ground truth hypoxia map, and images from the validation set are used to evaluate and track model generalizability during the training process. HX4-PET-reg images from the training set are used to train the paired Pix2Pix model. The unregistered image couples HX4-PET-unreg and ldCT-unreg are required only for the training set, of which only the HX4-PET-unreg is involved in CycleGAN-naive training, whereas both are used in CycleGAN-balanced training.
+
+
+% ----------------------------
+\subsection{Training Pipeline}
+% Preprocessing - HX4-PET SUV normalization with SUVmean_aorta
 % Components of the Training Pipeline -- patch based workflow, loss function
 % Components of the Validation Pipeline -- patch based workflow, metric computation
+% Training time
+
 
 
 
