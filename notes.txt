@@ -19,3 +19,7 @@ Thesis - Long story short:
         1. GANs did produce realistic HX4-PET-syn images.
         2. Using *multiple* IQA metrics of different types, overall image quality can be captured in a more complete manner. They did help quite a bit in tracking model training. Application-specific downstream analysis turned out to be crucial as it highlighted certain weaknesses of the models. 
         3. Unpaired methods more promising because -- no reg related issues, less pressure on clinic and patients for acquiring paired images. 
+
+
+Changes:
+    - Alexia's suggestions for content structure and introduction

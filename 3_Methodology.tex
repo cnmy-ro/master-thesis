@@ -2,16 +2,6 @@
 \label{Methodology}
 
 
-\section{Software and Hardware}
-\todo{write this}
-
-For certain specialized tasks, such as PET SUV calculation and RTstruct conversion, parts of source code from a public repository \footnote{\url{https://github.com/voreille/hecktor}} were used to ensure the correctness of the implementation. This code repository contains utility code created as part of the HECKTOR PET/CT segmentation challenge \cite{andrearczyk2020overview} by its authors.
-
-% FDG SUV calculation
-For the sake of correctness of the implementation of this formula, utility code from the HECKTOR repository was used to perform this conversion \footnote{BQML to SUV conversion code: \url{https://bit.ly/33IG4Jg}}.
-
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data}
@@ -61,13 +51,14 @@ The Maastro Lung HX4 dataset already included the registered HX4-PET and ldCT im
 To distinguish the registered HX4-PET from the unregistered one, the two are denoted as \textit{HX4-PET-reg} and \textit{HX4-PET-unreg}, respectively. The term \textit{HX4-PET} is used hereafter to denote the image modality in a general sense and not referring to the registered or unregistered versions of the images from the dataset. It is obvious that FDG-PET and pCT were needed since both would be the inputs to the GANs, and HX4-PET-reg to be the ground-truth given these inputs. And since HX4-PET-reg contained registration imperfections as seen in Figure \ref{fig:reg_images}, the HX4-PET-unreg instead would be used in the unpaired CycleGAN training to sidestep this issue. The \textit{unregistered} ldCT, \textit{ldCT-unreg}, would play a crucial role in the modified CycleGAN system as discussed further in \ref{data_requirements}, and hence was not discarded. However, the \textit{registered} ldCT wouldn't be required anymore beyond this point since its sole purpose was to aid in the registration of HX4-PET, and was thus discarded.
 
 
-% --------------------------------
-\subsection{Data Processing Steps}
+% -------------------------------------
+\subsection{Data Preparation Procedure}
 \label{Data_Processing}
 The Maastro Lung HX4 dataset needed to be prepared and converted into a form that could be used for GAN training. The different processing steps performed on the data are discussed here. The overall data processing can be broken down into two phases, which are elaborated in the following paragraphs. 
 
+
 \subsubsection{Loading Images and Converting to Appropriate Representation}
-The first step was to load the images from different formats into computer memory and convert to a standard programmatic representation. All the original images, except for HX4-PET-reg, were supplied as DICOM series. 
+The first step was to load the images from different formats into computer memory and convert to a standard programmatic representation. All the original images, except for HX4-PET-reg, were supplied as DICOM series. The \textit{PyDicom} library was used to read the DICOM series along with their metadata, and the image data structure provided in the \textit{SimpleITK} library was used as the standard representation for the loaded images. For certain specialized tasks, such as PET SUV calculation and RTstruct conversion, parts of source code from this \footnote{HECKTOR 2020 Challenge repository: \url{https://github.com/voreille/hecktor}. This contains utility code created as part of the HECKTOR PET/CT segmentation challenge \cite{andrearczyk2020overview} by its respective authors.} public repository were used to ensure the correctness of the implementation. 
 
 \vspace{4mm}
 \noindent
@@ -78,7 +69,7 @@ The first step was to load the images from different formats into computer memor
 \end{equation}
 where $2^{-t/\tau}$ is the decay correction factor at time of acquisition \textit{t}, given the half-life $\tau$ of the radiotracer. The values for the patient's weight, administered dose and decay parameters are stored in the DICOM image series as metadata, which was accessed using the PyDicom library. 
 
-HX4-PET-unreg images, however, were represented in terms of the non-standard CNTS units here, for reasons discussed earlier in \ref{Original_Scans}. CNTS to SUV conversion was performed using the formula implemented in this \footnote{CNTS to SUV conversion code: \url{https://bit.ly/3wbtGgW}} public GitHub repository.
+HX4-PET-unreg images, however, were represented in terms of the non-standard CNTS units here, for reasons discussed earlier in \ref{Original_Scans}. CNTS-to-SUV conversion was performed using the formula implemented here \footnote{CNTS to SUV conversion code: \url{https://bit.ly/3wbtGgW}}.
 
 \vspace{4mm}
 \noindent
@@ -129,7 +120,7 @@ The second data processing phase involved cropping and resampling the loaded ima
     \label{fig:data_proc_overview_2}
 \end{figure}
 
-Finally, all the processed images were saved as \textit{.nrrd} files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin, as a single file. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far. The dataset was then split into a training set and a validation set. The training set was comprised of data from the PET-Boost clinical trial (15 patients), and the validation set consisted of the data from the Nitroglycerin trial (19 patients). 
+Finally, all the processed images were saved as \textit{.nrrd} files. The NRRD format allows storage of N-dimensional raster images along with their spatial information, including voxel spacing (resolution) and physical coordinates of the origin, as a single file. Figure \ref{fig:data_proc_overview_2} shows an overview of the entire second phase of data processing discussed thus far. The dataset was then split into a training set and a validation set. The training set was comprised of data from the \textit{PET-Boost} clinical trial (15 patients), and the validation set consisted of the data from the \textit{Nitroglycerin} trial (19 patients). 
 
 
 
@@ -360,31 +351,45 @@ Depending on the GAN, the required training images as well as the body mask are 
 
 
 \subsubsection{Patch-based training}
-We use a patch-based training approach to cope with the high memory requirements of the GANs and with the small size of the training set. For each pre-processed image, a single 3D patch is extracted from the image and is used as to feed the model. The body mask is used to limit patch sampling to the body region to avoid extracting patches from the background, and the patches are sampled randomly with a uniform random distribution over the body region. We use a patch size of 128$\times$128$\times$32 voxels. During paired training, corresponding patches from the same physical position are extracted from the FDG-PET, pCT and HX4-PET-reg images. If $f_A$ and $f_B$ denote the position of focal points of the patches corresponding to domain \textit{A} and domain \textit{B} images, then in this case, $f_B = f_A$. Figure \ref{fig:paired_patch_sampling} shows a simplified visualization of the paired patch sampling process.
+We use a patch-based training approach to cope with the high memory requirements of the 3D GANs and with the small size of the training set. For each pre-processed image, a single 3D patch is extracted from the image and is used as to feed the model. The body mask is used to limit patch sampling to the body region to avoid extracting patches from the background. Patches from the input images (FDG-PET and pCT) are sampled randomly with a uniform random distribution over the body region. Then, depending on whether the training is paired or unpaired, a suitable \textit{patch propagation} strategy is used to obtain a corresponding patch from the HX4-PET image. We use a fixed patch size of 128$\times$128$\times$32 voxels. 
+
+Let $f_A$ be the location of the focal point of the patch sampled from the input images. During paired training, a corresponding focal point $f_B$ in HX4-PET-reg is then calculated simply as $f_B = f_A$, since the image is spatially aligned to the input images. Figure \ref{fig:paired_patch_sampling} shows a simplified visualization of the paired patch sampling process.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/Data/patch_sampling/paired_patch_sampling.png}
-    \caption{...}
+    \caption{Using uniform random sampling in the body region, focal point $f_A$ (green circles) is first sampled from FDG-PET (and pCT). A corresponding point $f_B$ (cyan circle) is then propagated to HX4-PET-reg such that $f_B = f_A$. Since all three images are spatially aligned, the resulting patches (green and cyan bounding boxes) possess a common alignment and coverage as well.}
     \label{fig:paired_patch_sampling}
 \end{figure}
 
-In case of unpaired training, a more complex sampling strategy is used instead of sampling patches randomly and independently from domain \textit{A} and domain \textit{B} images. This is to ensure a form of ``weak pairing" between the two sets of patches -- the anatomical region covered in their patches from \textit{A} images is roughly similar to the region covered by patches taken from \textit{B} image(s). 
-First, corresponding patches from the same randomly chosen location are extracted from FDG-PET and pCT. Let the location of the focal point of this patch be denoted as $f_A$. Then, exploiting the fact that all scans have the same patient orientation, an equivalent focal point $f_B$ is estimated for the HX4-PET-unreg (and its coupled ldCT-unreg, if using). $f_B$ is calculated such that its \textit{relative} position with respect to the volume size of the HX4-PET-unreg is same as the relative position of $f_A$ with respect to the volume size of FDG-PET/pCT. This is followed by defining a \textit{local sampling region} of size $l_x \times l_y \times l_z$ around $f_B$, then updating the $f_B$ by randomly sampling from this local sampling region. Let this new focal point be denoted as $f_B'$. Again, the condition is applied to $f_B'$ that it must lie within the patient's body region and not in the image background. This additional stochasticity is introduced in the process to account for possible variation in the body position and structure of \textit{A} and \textit{B} patients. Figure \ref{fig:unpaired_patch_sampling} shows a visual representation of the unpaired patch sampling process.
+In case of unpaired training, a more sensible patch propagation strategy is used instead of sampling patches randomly and independently from the input images and the target domain's unregistered images. This is to ensure a form of ``weak pairing" between the two sets of patches -- the anatomical region covered in both input image patches and the HX4-PET-unreg image should be roughly similar. We exploit the fact that all scans have the same patient orientation and a similar FOV. Given the focal point $f_A$ of the patch sampled from the input images, an equivalent focal point $f_B$ is estimated on the HX4-PET-unreg as shown in Equation \ref{eq:unpaired_patch_sampling}.
+\begin{equation}
+    f_B = \frac{f_A}{size_A} size_B
+    \label{eq:unpaired_patch_sampling}
+\end{equation}
+$f_B$ is calculated such that its relative position with respect to the volume size $size_B$ of the HX4-PET-unreg image is same as the relative position of $f_A$ with respect to the size $size_A$ of the input images. This is followed by defining a \textit{local sampling region} of size $l_x \times l_y \times l_z$ around $f_B$ and then updating $f_B$ by randomly sampling from this local sampling region. Let this new focal point be denoted as $f_B'$. Again, the condition is applied on $f_B'$ that it must lie within the patient's body region and not in the image background. This additional stochasticity is introduced in the process to account for possible variation in the body position and anatomy across patients. When using ldCT-unreg (i.e. during CycleGAN-balanced training), it shares the same $f_B'$ as HX4-PET-unreg. Figure \ref{fig:unpaired_patch_sampling} shows a visual representation of the unpaired patch sampling process.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/Data/patch_sampling/unpaired_patch_sampling.png}
-    \caption{``weak pairing" ...}
+    \caption{Given a focal point $f_A$ (green circles) in the input images, a point $f_B$ (pink circle) is propagated to the HX4-PET-unreg image and a local sampling region (pink translucent bounding box) is defined around it. A new point $f_B'$ (cyan circle) is then sampled from this local region and is used to define the HX4-PET-unreg patch (cyan bounding box). Both sets of patches cover similar anatomical regions.}
     \label{fig:unpaired_patch_sampling}
 \end{figure}
 
-The local sampling region is specified as the fraction of the volume size of an HX4-PET-unreg image, and in our experiments, we use size 35\% $\times$ 35\% $\times$ 60\%. This relatively large size was set to provide sufficient freedom for a valid patch to be sampled from the full images which are themselves not very large in size. 
+The local sampling region is specified as a fraction of the volume size of HX4-PET-unreg image, and in our experiments, we use size 35\% $\times$ 35\% $\times$ 60\%. This relatively large size is set to provide just sufficient freedom for a set of valid patches to be sampled from the full images. A much simpler 2D slice-based unpaired patch sampling was previously suggested by Yang et al. \cite{yang2018unpaired} which produced better results compared to randomly and independently selecting slices for training.
 
 
 \subsubsection{Patch-based validation}
+A patch-based inference is used during the model validation phase using a \textit{sliding window} scheme \footnote{Sliding window inferer: \url{https://docs.monai.io/en/latest/inferers.html}}. Given full-size input images, patches are sequentially extracted and fed into the GAN model independently. Their corresponding predicted HX4-PET-syn patches are then stitched together into the full-size HX4-PET-syn image. Following this, various image similarity metrics (discussed further in \ref{image_quality_metrics}) are computed between this HX4-PET-syn image and the ground-truth HX4-PET-reg image. 
 
-\subsubsection{Training time}
+
+% ---------------------------------
+\subsection{Training Configuration}
+
+Because of our use of a patch-based training approach that involves random sampling, the notion of an ``epoch" doesn't exist here. Instead, the number of iterations is used as a measure of training duration, where an iteration corresponds to a forward pass followed by the update of weights of all networks in the GAN system. In our experiments, we train each GAN model for 60,000 iterations. 
+Weight for the element-wise loss in Pix2Pix is set to 10, and the cycle-consistency loss for CycleGAN is scaled by 10 as well. Similar to the optimizer configuration used in the original papers \cite{isola2017image, zhu2017unpaired}, we use Adam optimizer with moment parameter settings $\beta_1$=0.5 and $\beta_2$=0.999. We use initial learning rates 0.0002 for the generators and 0.0001 for the discriminators during the first 30,000 iterations, and linearly decayed to 0 over the next 30,000 iterations. Model validation is performed every 1000 iterations.
+
+The GANs and the model training pipeline were implemented entirely in \textit{PyTorch}. Training was performed on an NVIDIA Tesla V100 SXM2 (32 GB) GPU provided as part of the Data Science Research Infrastructure (DSRI) \footnote{\url{https://maastrichtu-ids.github.io/dsri-documentation/}} from Maastricht University. The training time for Pix2Pix, CycleGAN-naive and CycleGAN-balanced were 9.5 hours, 13 hours and 15.25 hours, respectively. 
 
 
 
@@ -392,9 +397,25 @@ The local sampling region is specified as the fraction of the volume size of an 
 \section{Evaluation Methods}
 \label{Evaluation_Methods}
 
+\subsection{Image Quality Metrics}
+\label{image_quality_metrics}
+
+\subsection{Downstream Image Analysis}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A Simulated Problem: Depth Estimation from Multimodal Input}
 
+Pix2Pix and CycleGAN are general frameworks capable of being applied to a large space of image translation problems without much modification. The altered design of the CycleGAN-balanced system is meant to be problem-specific and optimized for our use-case. Either way, testing the different GAN approaches on medical imaging data is difficult for several reasons -- (1) training GANs on 3D images is time-consuming, (2) special visualization software is required to inspect the predicted 3D images, and (3) certain failure modes and artifacts in the medical images can be hard to detect for an untrained observer. Therefore, it becomes very difficult to identify any existing methodological flaws or implementation bugs which may propagate into the results thereby causing misinterpretation. In order rapidly and effectively prototype, test and debug the GANs, we construct a simple 2D image-to-image translation task based on computer vision literature that is also representative of our medical image translation problem task. This simulated computer vision task involves estimation of depth from a multimodal input comprising of RGB photographs and surface normals, and the dataset we use is the ClearGrasp dataset of transparent objects \cite{sajjan2020clear}.
 
+ClearGrasp is a publicly available dataset \footnote{ClearGrasp website: \url{https://sites.google.com/view/cleargrasp/synthetic-dataset}} for benchmarking deep-learning-based monocular depth estimation methods in challenging environments where transparent objects are the objects of interest. It contains 50,000 sets of synthetic 2D images of five different transparent objects for training, and each example consists of different renderings, including an RGB photograph, a depthmap, a surface normal map, segmentation masks and object outlines. Of main interest to us are the first three since they are essentially different modalities that contain complementary information. Figure \ref{fig:cleargrasp_sample} visualizes a sample set of these images. 
 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{figures/Cleargrasp_data/cleargrasp_sample.png}
+    \caption{Transparent objects are difficult to delineate in the RGB photograph since their surfaces are not distinctly visible. Furthermore, estimating depth precisely from merely one monocular RGB photo is a challenging problem by itself. However, given explicitly the information on the surface angles in the scene, estimation of depth of transparent objects becomes more approachable. Surface normal images encode 3D surface angle information as colors in a 2D image.}
+    \label{fig:cleargrasp_sample}
+\end{figure}{}
+
+We argue that this depth estimation task can simulate up to a certain extent the challenges of the HX4-PET prediction task for the following reasons.  
