@@ -1,6 +1,9 @@
 \chapter{Introduction}
 \label{Introduction}
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem Statement}
 Tumor hypoxia is a condition wherein certain regions within the tumor volume are deprived of oxygen, and is caused when the tumor's blood supply system cannot keep up with the proliferation rate of its cells \cite{hockel2001tumor}. Hypoxic cells develop certain alterations in their functioning mechanisms that make them resistant to conventional modes of cancer treatment, including radiotherapy and chemotherapy, and increase metastatic spread \cite{muz2015role}, thereby resulting in poor prognosis \cite{vaupel2007hypoxia}. In radiotherapy, it would be of great value to detect these hypoxic sub-volumes during treatment planning so that the radiation dose can be adjusted accordingly to be more effective, for example, by selectively delivering higher dose to the hypoxic regions, a technique known as radiotherapy boosting. Among various non-invasive methods investigated for hypoxia detection, Positron Emission Tomography (PET) based hypoxia imaging has been the most preferred one \cite{fleming2015imaging}. PET is a molecular imaging technique that involves administration of a specific radioactive pharmaceutical contrast agent, known as radiotracer, to the patient, followed by tracking it via scanning to provide information about the status of a particular biochemical process. Hypoxia PET imaging provides, essentially, an oxygen concentration heatmap which can be overlaid on a Computer Tomography (CT) scan to provide contrast around the anatomical regions that are hypoxic. A newly developed hypoxia tracer, denoted as [$^{18}$F]HX4, has been shown to be highly effective and stable in detecting regions of tumor hypoxia \cite{sanduleanu2020hypoxia}, and the PET image acquired using this tracer is denoted as HX4-PET. HX4-PET imaging technique, however, is not widely available, is expensive and has only been used in research and clinical trials so far. 
 
@@ -10,6 +13,7 @@ It would be of great benefit to patients and to the care provider if entire HX4-
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Significance of the Thesis}
 This work formulates the hypoxia prediction problem as an image-to-image translation task where entire 3D HX4-PET images are to be synthesized from FDG-PET and CT. We investigate both paired and unpaired GAN approaches, specifically Pix2Pix and CycleGAN, as potential solutions to this problem. CycleGAN system utilizes cycle-consistency to learn an image translation model in the absence of paired training data by simultaneously learning an input-target mapping as well as its inverse. However, since the input in our use-case is multimodal, applying CycleGAN naively to this problem may not be optimal. CycleGAN assumes the existence of a bijective function between the input and the target domains, which is violated here as it is practically impossible to precisely reconstruct both FDG-PET and CT back from a single HX4-PET. Therefore, in order to sidestep this issue, a design improvement in the CycleGAN training is proposed for this specific use-case. To our best knowledge, ours is the first work that has attempted GAN-based cross-modality medical image translation involving more than two imaging modalities.
 
@@ -19,10 +23,12 @@ Finally, we perform a clinically relevant analysis of the synthetic HX4-PET imag
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Research Questions}
 The research questions posed initially at the time of drafting the thesis plan were slightly updated, without changing their overall theme, later when the work on the project actually began. The primary reason is that the exact specifications of the project were not provided earlier, rather only a vague formulation of the problem was given -- synthesis of Contrast-Enhanced Computed Tomography (CECT) images from CT using GANs. ``Contrast-enhanced" CT is an umbrella term that includes a variety of techniques used to selectively provide contrast enhancement to certain regions in a CT scan, ranging from using iodine-based contrast agents that improve visibility of organs like liver and pancreas by raising the radiodensity of blood to acquiring PET scans that utilize radiotracers to highlight sites of certain physiological processes like metabolism and hypoxia. Therefore, one of the main changes in the research questions was replacing the term ``CECT" with ``HX4-PET". Reasons for other question-specific changes are provided further in \ref{updated_research_questions}.
 
 
+% -------------------
 \subsection{Original}
 \begin{enumerate}
     \item What measures need to be considered during evaluation to more accurately quantify the similarity of synthetic CECT images with clinically acquired ones in an unpaired image-to-image translation scenario?
@@ -31,6 +37,7 @@ The research questions posed initially at the time of drafting the thesis plan w
 \end{enumerate}
 
 
+% ------------------
 \subsection{Updated}
 \label{updated_research_questions}
 

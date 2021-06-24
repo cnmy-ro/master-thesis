@@ -21,5 +21,6 @@ Thesis - Long story short:
         3. Unpaired methods more promising because -- no reg related issues, less pressure on clinic and patients for acquiring paired images. 
 
 
-Changes:
+TODO:
     - Alexia's suggestions for content structure and introduction
+    - Fix tenses

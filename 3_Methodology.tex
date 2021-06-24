@@ -5,9 +5,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data}
-% Image modalities involved and their properties
-% The Maastro Lung HX4 dataset
-% Data processing
 The medical imaging dataset used in this project, hereafter referred to as \textit{Maastro Lung HX4 dataset}, is a combination of two different datasets originally acquired for two clinical trials at Maastro, and was also previously used by Even et al. \cite{even2017predicting} in their hypoxia prediction study. It includes 3D scans of 34 Non-Small Cell Lung Cancer (NSCLC) patients in total, of which 15 belong to the \textit{PET-Boost} trial (registration number NCT01024829) \cite{van2012pet} and 19 to the \textit{Nitroglycerin} trial (registration number NCT01210378) \cite{even2017predicting}. The request for the usage of this data in this project was approved by the institutional review board (IRB).
 
 
@@ -84,9 +81,7 @@ HX4-PET-unreg images, however, were represented in terms of the non-standard CNT
 
 Following this, the FDG-PET, HX4-PET-unreg, pCT and the tumor and body masks were converted to SimpleITK objects in Python. The ldCT-unreg was also loaded using PyDicom and converted to this representation. HX4-PET-reg, stored in \textit{.mhd/.raw} format containing pre-computed SUV values, was directly loaded into a SimpleITK object. Figure \ref{fig:data_proc_overview_1} shows a visual overview of these steps.
 
-
 \subsubsection{Cropping and Resampling}
-
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/Data/fdgpet_pct_crop1/N010-FDG_PET_pCT-uncropped_crop1.png}
@@ -207,7 +202,6 @@ Cycle-consistency loss $L_{cyc}(G_{AB}, G_{BA})$ encourages a reconstruction to 
 
 
 \subsubsection{CycleGAN-naive: Default CycleGAN applied to HX4-PET synthesis problem}
-
 We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. The term ``unpaired" can be used on two levels here -- on the patient level and on the voxel level. At the patient level, our dataset includes all three image modalities for each patient. The training data for the CycleGAN was patient-level unpaired, meaning the \textit{A}-\textit{B} image correspondence information was not used and both domain \textit{A} and domain \textit{B} samples were independently shuffled. At the voxel level, the registered HX4-PET-reg images provide aligned input-target paired data, whereas the unregistered images -- HX4-PET-unreg -- are devoid of any artificial deformation related to registration. We, therefore, considered using HX4-PET-unreg images as the set of domain \textit{B} samples which results in CycleGAN training dataset being unpaired at the voxel level as well. The default CycleGAN framework naively applied to our use-case is henceforth referred to as \textit{CycleGAN-naive}. Figure \ref{fig:cyclegan_naive} shows a schematic of the generator and discriminator training phases of CycleGAN-naive. 
 
 \begin{figure}[h!]
@@ -222,9 +216,7 @@ We investigated unpaired translation of FDG-PET/pCT to HX4-PET using CycleGAN. T
 
 We argue that CycleGAN-naive has several drawbacks, and hence, is not an optimal implementation of CycleGAN for our use-case. In the \textit{A}$\rightarrow$\textit{B}$\rightarrow$\textit{A} cycle, $G_{AB}$ takes as input FDG-PET and pCT to output HX4-PET-syn, and $G_{BA}$ uses HX4-PET-syn to reconstruct FDG-PET and pCT. The learning task $G_{AB}$ is realistic since hypoxia patterns can be reliably predicted from the inputs, and therefore, has a physiological basis (see \ref{Related_Work-hypoxia_prediction}) However, the learning task of $G_{BA}$ is not reasonable. It is not possible to precisely predict a patient's anatomy (CT) as well as their metabolism levels (FDG) from just the hypoxia information, and the CT modality is of more concern to our discussion. A CT image contains highly detailed structural information with sharp and fine features, whereas PET images are functional heatmaps having blurred and diffused characteristics. $G_{BA}$ cannot accurately recreate pCT from HX4-PET-syn unless $G_{AB}$ encodes the CT information into the latter in the form of noise. But, then the HX4-PET-syn image would not resemble a clinically acquired HX4-PET scan. Therefore, cycle-consistency constraint conflicts with the domain \textit{B} adversarial criterion instead of complementing it. Now looking at the \textit{B}$\rightarrow$\textit{A}$\rightarrow$\textit{B} cycle, the task of $G_{BA}$ is to compute realistic FDG-PET and pCT given only the real HX4-PET-unreg image, which it can perform, especially for pCT, by hallucinating the patient's anatomy. However, in that case, $G_{AB}$ would be given this fake information to precisely reconstruct the HX4-PET-unreg. Because the task of $G_{AB}$ is to correctly predict hypoxia based on given CT (and FDG-PET) information, it is unreasonable to provide it with fake anatomical information and expect it to predict hypoxia patterns from it that match the real HX4-PET-unreg. Hence, in this cycle as well, cycle-consistency requirement conflicts with adversarial objective. The fundamental assumption of a bijective relationship between domains \textit{A} and \textbf{B} made by CycleGAN does not hold here, and the resulting images are likely to be highly inaccurate and not representative of the patient's condition. Based on these reasons, we believe that CycleGAN, in its default form, cannot tackle the problem task, and that a more intelligent strategy is required.
 
-
 \subsubsection{CycleGAN-balanced: An improved design}
-
 We propose a custom design improvement to CycleGAN training to make the system more optimized for our use-case. In PET acquisition, CT scan plays an important role of providing material density information which is used to apply density-correction to the recorded PET intensities. We utilize the fact that an HX4-PET scan is always acquired together with a CT scan which, in our dataset, is a low-dose CT (ldCT). Model training is unpaired similar to CycleGAN-naive, and the ldCT-unreg images are included in the training data accompanying their corresponding HX4-PET-unreg images. 
 
 To begin with, we slightly tweak what the domains \textit{A} and \textit{B} represent here -- let \textit{A} be the domain of FDG-PET images and \textit{B} of HX4-PET images. The CT images -- pCT and ldCT -- are then considered ``supporting" images that provide anatomical context to the generators. Note that pCT has voxel-wise correspondence only with FDG-PET, and ldCT-unreg is aligned only with HX4-PET-unreg. Now, the task of each generator is to take as input a PET image from its source domain and to compute its target domain PET image, while being supplied anatomical context using the available CT image (one that is aligned with the source domain PET). To elaborate on this, let us again consider the two cycles separately: 
@@ -295,7 +287,6 @@ We use the 3D PatchGAN architecture for our discriminator. The network is essent
 
 Let \textit{Ck} denote a block composed on Convolution-InstanceNorm-LeakyReLU where the 3D convolution layer uses \textit{k} spatial filters of size 4$\times$4$\times$4 and input padding of 1 at each side along each axis, and Leaky ReLU has a negative side slope of 0.2. The exact discriminator architecture is then shown in Table \ref{tab:discriminator_architecture}. Under this configuration, the receptive field of each output unit is 70$\times$70$\times$70 voxels on the input image.
 
-
 \begin{table}[h!]
     \centering
     \begin{tabular}{|c|c|}
@@ -341,14 +332,10 @@ The FDG-PET and pCT images comprise the model input. HX4-PET-reg is the ground t
 
 % ----------------------------
 \subsection{Training Pipeline}
-% Preprocessing - HX4-PET SUV normalization with SUVmean_aorta
-% Components of the Training Pipeline -- patch based workflow, loss function
-% Components of the Validation Pipeline -- patch based workflow, metric computation
-% Training time
+\label{training_pipeline}
 
 \subsubsection{Data pre-processing and normalization}
 Depending on the GAN, the required training images as well as the body mask are fetched from their \textit{.nrrd} form into the computer memory. The body mask is applied to pCT, FDG-PET and HX4-PET-reg (if using), and the out-of-the-body region intensities are set to zero signal value -- i.e. 0 SUV (zero activity) in the PET images and -1024 HU (value for air) in pCT. This body mask was obtained from the pCT (see \ref{Data_Processing}), and therefore, cannot be applied to the unregistered images. When performing unpaired training with HX4-PET-unreg and ldCT-unreg, the latter is used to automatically generate their own body mask via HU thresholding and morphological operations. This new body mask is then applied to HX4-PET-unreg (and ldCT-unreg, if using). Body masking is then followed by normalization. CT intensities are clipped and limited to the HU range [-1000, 2000] and linearly rescaled to range [-1, 1]. FDG-PET is clipped into the SUV range [0, 15] followed by rescaling to [-1, 1]. In case of HX4-PET images, following previous related work \cite{even2017predicting}, the SUV values were first divided by the mean SUV of the patient's aorta region. The resulting intensity representation ($\frac{SUV}{SUV_{aorta-mean}}$ ratio) has a special meaning when used in the context of the tumor, wherein it is referred to as the tumor-to-background ratio (TBR). Here, the aorta is considered the ``background" with respect to the tumor. This is a clinically useful intensity representation that has pre-defined standard thresholds \cite{zegers2013hypoxia} and can, hence, be used for hypoxia quantification during image evaluation (described further in Section \ref{Evaluation_Methods}). We perform this conversion step at the beginning of the training pipeline, instead of during the evaluation stage, because the aorta annotation wasn't provided in the dataset which makes it impossible to compute the $SUV_{aorta-mean}$ value directly from the HX4-PET images. These values were instead provided for each patient directly in a separate file, and we had to depend on them for SUV $\longleftrightarrow$ TBR conversion throughout the training and evaluation stages. Following the conversion of the body masked HX4-PET images into this intensity unit, the intensities were clipped to the range [0, 3] and rescaled to [-1, 1]. The aforementioned clipping ranges for FDG-PET SUV and HX4-PET TBR were because they covered most of the intensity variation in their respective images, especially in the tumor area.
-
 
 \subsubsection{Patch-based training}
 We use a patch-based training approach to cope with the high memory requirements of the 3D GANs and with the small size of the training set. For each pre-processed image, a single 3D patch is extracted from the image and is used as to feed the model. The body mask is used to limit patch sampling to the body region to avoid extracting patches from the background. Patches from the input images (FDG-PET and pCT) are sampled randomly with a uniform random distribution over the body region. Then, depending on whether the training is paired or unpaired, a suitable \textit{patch propagation} strategy is used to obtain a corresponding patch from the HX4-PET image. We use a fixed patch size of 128$\times$128$\times$32 voxels. 
@@ -378,44 +365,86 @@ $f_B$ is calculated such that its relative position with respect to the volume s
 
 The local sampling region is specified as a fraction of the volume size of HX4-PET-unreg image, and in our experiments, we use size 35\% $\times$ 35\% $\times$ 60\%. This relatively large size is set to provide just sufficient freedom for a set of valid patches to be sampled from the full images. A much simpler 2D slice-based unpaired patch sampling was previously suggested by Yang et al. \cite{yang2018unpaired} which produced better results compared to randomly and independently selecting slices for training.
 
-
 \subsubsection{Patch-based validation}
-A patch-based inference is used during the model validation phase using a \textit{sliding window} scheme \footnote{Sliding window inferer: \url{https://docs.monai.io/en/latest/inferers.html}}. Given full-size input images, patches are sequentially extracted and fed into the GAN model independently. Their corresponding predicted HX4-PET-syn patches are then stitched together into the full-size HX4-PET-syn image. Following this, various image similarity metrics (discussed further in \ref{image_quality_metrics}) are computed between this HX4-PET-syn image and the ground-truth HX4-PET-reg image. 
-
-
-% ---------------------------------
-\subsection{Training Configuration}
-
-Because of our use of a patch-based training approach that involves random sampling, the notion of an ``epoch" doesn't exist here. Instead, the number of iterations is used as a measure of training duration, where an iteration corresponds to a forward pass followed by the update of weights of all networks in the GAN system. In our experiments, we train each GAN model for 60,000 iterations. 
-Weight for the element-wise loss in Pix2Pix is set to 10, and the cycle-consistency loss for CycleGAN is scaled by 10 as well. Similar to the optimizer configuration used in the original papers \cite{isola2017image, zhu2017unpaired}, we use Adam optimizer with moment parameter settings $\beta_1$=0.5 and $\beta_2$=0.999. We use initial learning rates 0.0002 for the generators and 0.0001 for the discriminators during the first 30,000 iterations, and linearly decayed to 0 over the next 30,000 iterations. Model validation is performed every 1000 iterations.
-
-The GANs and the model training pipeline were implemented entirely in \textit{PyTorch}. Training was performed on an NVIDIA Tesla V100 SXM2 (32 GB) GPU provided as part of the Data Science Research Infrastructure (DSRI) \footnote{\url{https://maastrichtu-ids.github.io/dsri-documentation/}} from Maastricht University. The training time for Pix2Pix, CycleGAN-naive and CycleGAN-balanced were 9.5 hours, 13 hours and 15.25 hours, respectively. 
+A patch-based inference is used during the model validation phase using a \textit{sliding window} scheme \footnote{Sliding window inferer: \url{https://docs.monai.io/en/latest/inferers.html}}. Given full-size input images, patches are sequentially extracted and fed into the GAN model independently. Their corresponding predicted HX4-PET-syn patches are then stitched together into the full-size HX4-PET-syn image. Following this, various image similarity metrics (discussed further in \ref{image_quality_metrics}) are computed between this HX4-PET-syn image and the ground-truth HX4-PET-reg image. The predicted and the ground-truth images were denormalized back to their prior intensity scale ($\frac{SUV}{SUV_{aorta-mean}}$ ratio) before computing the metrics. The computed HX4-PET-syn images are then converted back into SUV intensity representation and saved as NRRD files for later inspection.
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Evaluation Methods}
 \label{Evaluation_Methods}
+The validation set used to track model generalizability is the same data used for final evaluation. We perform evaluation on the predicted HX4-PET-syn from two different perspectives. In the first, the objective is to evaluate the overall success of the models in learning the input-target mapping, and the evaluation is performed by assessing the fidelity of the full synthetic samples produced by the models with respect to the ground-truth. The second perspective regards the clinical value of the synthetic hypoxia maps as the most important factor since clinical utility of the models is the end goal. In a clinical scenario, the tumor is the sole region-of-interest (ROI) whose hypoxia distribution needs to be measured, and therefore, the evaluation is limited to this locality and consists of relevant application-specific downstream tasks. All metrics were applied on images with intensities expressed in the aorta-normalized SUV ($\frac{SUV}{SUV_{aorta-mean}}$) scale which is clipped to the interval [0, 3]. 
 
+
+% --------------------------------
 \subsection{Image Quality Metrics}
 \label{image_quality_metrics}
+Isola et al. \cite{isola2017image} note that since Pix2Pix (and this would apply to CycleGAN as well as an extension) learns a structured loss via its discriminator, using simple pixel-wise difference metrics such as mean-squared error is not an effective evaluation strategy, especially for graphics tasks using natural images. Such metrics do not take into account image statistics and texture which the model has learned. However, in case of quantitative medical images where intensities have some standard scale, element-wise differences can be a meaningful choice and can at least partially be informative about the image quality. We use the following three voxel-wise metrics:
 
+\begin{enumerate}
+    \item Mean-Squared Error (MSE): MSE measures the average square of the distances of predicted intensities from the true values. It is more sensitive to large differences. The MSE values are represented in the squared scale of the image intensities and are in the range [0, 9] in our case. Voxel-wise similar images have low MSE.
+    \item Mean-Absolute Error (MAE): It measures absolute deviations from the true value and is therefore more robust to outliers as compared to MSE. MAE is given on same scale as the image intensities.
+    \item Peak Signal-to-Noise Ratio (PSNR): PSNR is a measure related to signal power and is specified in decibels. It is related to MSE in that the "noise" part in PSNR corresponds to MSE measured with respect to the "peak signal" that corresponds to the maximum intensity value in the reference image. A higher PSNR value signifies higher quality image in a voxel-wise sense.
+\end{enumerate}
+
+We use three additional metrics that measure the statistical properties of a given image in order to complement the ones based on voxel-wise difference. Like the previous three metrics, each of these is a full-reference metric requiring a ground-truth reference image. They are given as follows:
+
+\begin{enumerate}
+    
+    \item Structural Similarity Index Measurement (SSIM): SSIM \cite{wang2004image} is a perceptual metric that focuses on gauging the similarity of perceived local structure between the sample and reference images. It has a fixed scale with a range [-1, 1], -1 being the worst score and 1 being the best observed when both images are identical.
+    
+    \item Normalized Mutual Information (NMI): NMI \cite{studholme1999overlap} is a variant of the mutual information (MI) metric commonly used in multimodal image registration as an image similarity measure. It is an information theoretic quantity which, intuitively, measures the certainty of predicting intensity values in a region of a sample image given the intensities in the same region of the reference image. MI indicates the amount of information shared between the two images, and is maximum (1 in case of NMI) when the images are identical or perfectly correlated and is minimum (0 in case of NMI) when they have no correlation. Given a sample synthetic image $\vb{\hat{Y}}$ and its corresponding ground-truth $\vb{Y}$, NMI is calculated as: 
+    \begin{equation}
+        NMI(\vb{Y}, \vb{\hat{Y}}) = \frac{H(\vb{Y}) + H(\vb{\hat{Y}})}{H(\vb{Y}, \vb{\hat{Y}})}
+        \label{eq:metric_nmi}
+    \end{equation}
+    where $H(\vb{Y})$ and $H(\vb{\hat{Y}})$ are marginal entropy values for $\vb{Y}$  and $\vb{\hat{Y}}$, and $H(\vb{Y}, \vb{\hat{Y}})$ is their joint entropy.
+    
+    \item Image histogram distance: Histogram distance between two images measures the overlap of their intensity distributions, and has been used as an image similarity measure in applications such as image retrieval. As an image quality metric, we specifically compute the $\chi^2$ distance between the global histograms of a synthetic image and its ground-truth as follows: 
+    \begin{equation}
+        \chi^2(\vb{h}, \vb{\hat{h}}) = \frac{1}{2} \sum_{b} \frac{[\vb{h}_b - \vb{\hat{h}}_b]^2}{\vb{h}_b + \vb{\hat{h}}_b}
+        \label{eq:metric_histogram}
+    \end{equation}
+    where $\vb{h}$ are $\vb{\hat{h}}$ are histograms of the ground-truth and synthetic images respectively, and $b$ corresponds to a histogram bin.
+    
+\end{enumerate}
+
+The idea behind using a set of six metrics for image quality assessment is that each of these metrics has its own strengths and drawbacks, and that we hope of them to complement each other, thereby capturing the notion of overall image quality in a more complete manner. The same metrics are used to track model generalizability during training as well. 
+
+
+% ------------------------------------
 \subsection{Downstream Image Analysis}
+As clinical analysis of the HX4-PET-syn images, we quantify the predicted tumor hypoxia via two downstream tasks -- hypoxic tumor classification and hypoxic region segmentation. Hypoxic tumor classification task involves classifying a tumor as hypoxic or non-hypoxic and thus yields a relatively ``weak", yet robust, measure of tumor hypoxia. Knowing the hypoxic status of a tumor during radiotherapy, clinicians can choose to adjust the overall radiation dose to the tumor, increasing the dosage if the tumor is hypoxic. On the other hand, the task of segmenting precisely the exact hypoxic region inside the tumor provides a ``stronger", although less robust, hypoxia measurement. When the exact 3D spatial pattern of high-hypoxia area is known, the radiation beam can be shaped such that a higher radiation dose is delivered to this area. In addition to the aforementioned two downstream tasks, the MSE and SSIM metrics are computed locally inside the primary tumor to measure the similarity of the predicted tumor hypoxia distribution with the ground-truth. 
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A Simulated Problem: Depth Estimation from Multimodal Input}
+\label{ClearGrasp_Depth_Estimation}
 
-Pix2Pix and CycleGAN are general frameworks capable of being applied to a large space of image translation problems without much modification. The altered design of the CycleGAN-balanced system is meant to be problem-specific and optimized for our use-case. Either way, testing the different GAN approaches on medical imaging data is difficult for several reasons -- (1) training GANs on 3D images is time-consuming, (2) special visualization software is required to inspect the predicted 3D images, and (3) certain failure modes and artifacts in the medical images can be hard to detect for an untrained observer. Therefore, it becomes very difficult to identify any existing methodological flaws or implementation bugs which may propagate into the results thereby causing misinterpretation. In order rapidly and effectively prototype, test and debug the GANs, we construct a simple 2D image-to-image translation task based on computer vision literature that is also representative of our medical image translation problem task. This simulated computer vision task involves estimation of depth from a multimodal input comprising of RGB photographs and surface normals, and the dataset we use is the ClearGrasp dataset of transparent objects \cite{sajjan2020clear}.
+Pix2Pix and CycleGAN are general frameworks capable of being applied to a large space of image translation problems without much modification. On the other hand, the altered design of the CycleGAN-balanced system is meant to be problem-specific and optimized for our use-case. Either way, testing the different GAN approaches on medical imaging data is difficult for several reasons -- (1) training GANs on 3D images is time-consuming, (2) special visualization software is required to inspect the predicted 3D images, and (3) certain failure modes and artifacts in the medical images can be hard to detect for an untrained observer. Therefore, it becomes very difficult to identify any existing methodological flaws or implementation bugs which may propagate into the results thereby causing misinterpretation. In order rapidly and effectively prototype, test and debug the GANs, we construct a simple 2D image-to-image translation task based on computer vision literature that is also representative of our medical image translation problem task. This simulated computer vision task involves estimation of depth from a multimodal input comprising of RGB photographs and surface normals, and the dataset we use is the ClearGrasp dataset of transparent objects \cite{sajjan2020clear}.
 
-ClearGrasp is a publicly available dataset \footnote{ClearGrasp website: \url{https://sites.google.com/view/cleargrasp/synthetic-dataset}} for benchmarking deep-learning-based monocular depth estimation methods in challenging environments where transparent objects are the objects of interest. It contains 50,000 sets of synthetic 2D images of five different transparent objects for training, and each example consists of different renderings, including an RGB photograph, a depthmap, a surface normal map, segmentation masks and object outlines. Of main interest to us are the first three since they are essentially different modalities that contain complementary information. Figure \ref{fig:cleargrasp_sample} visualizes a sample set of these images. 
+ClearGrasp is a publicly available dataset \footnote{ClearGrasp website: \url{https://sites.google.com/view/cleargrasp/synthetic-dataset}} for benchmarking deep-learning-based monocular depth estimation methods in challenging environments where transparent objects are the objects of interest. It contains 50,000 training samples and 532 validation samples with five different transparent objects. Each sample is a set of synthetic 2D images consisting of different spatially aligned renderings, including an RGB photograph, a depthmap, a surface normal map, segmentation masks and object outlines. Of main interest to us are the first three since they are essentially different modalities that contain complementary information. Figure \ref{fig:cleargrasp_sample} visualizes a sample set of these images. 
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{figures/Cleargrasp_data/cleargrasp_sample.png}
-    \caption{Transparent objects are difficult to delineate in the RGB photograph since their surfaces are not distinctly visible. Furthermore, estimating depth precisely from merely one monocular RGB photo is a challenging problem by itself. However, given explicitly the information on the surface angles in the scene, estimation of depth of transparent objects becomes more approachable. Surface normal images encode 3D surface angle information as colors in a 2D image.}
+    \caption{Transparent objects are difficult to delineate in the RGB photograph since their surfaces are not distinctly visible. Furthermore, estimating depth precisely from merely one monocular RGB photo is a challenging problem by itself. However, given explicitly the information on the surfaces in the scene, estimation of depth of transparent objects becomes much more approachable.}
     \label{fig:cleargrasp_sample}
 \end{figure}{}
 
-We argue that this depth estimation task can simulate up to a certain extent the challenges of the HX4-PET prediction task for the following reasons.  
+We argue that this depth estimation task can simulate up to a certain extent the challenges of the HX4-PET prediction task. Following is an analysis of the involved modalities and the analogy between the two problem tasks:
+ 
+\begin{enumerate}
+    
+    \item RGB photograph: This modality captures optical properties of a scene including the shades of colors on various objects and the shadows and reflections cast by the objects. Using these features, one can differentiate one object from other and perceive their 3D structure. However, transparent objects are difficult to delineate when relying solely on optical information due to the refractive property of their surfaces. The role of a photograph in this depth estimation task can be viewed as being analogous to the role of pCT in hypoxia map prediction problem, since both the modalities supply rich structural information regarding the overall scene but fail to be informative about one specific region -- transparent objects' structure in case of photograph image and tumor biology in case of pCT.
+    
+    \item Surface normals: Surface normal images encode information about 3D surface angles into a 2D image via a colormap. In the ClearGrasp dataset, surface normal renderings explicitly supply precise surface data, even for transparent objects. Therefore, this modality provides an additional layer of information that complements photographic images. Surface normals, however, fail to differentiate between parallel surfaces even when they are at different depths from the observer. In contrast, a photograph can be useful in such a situation depending on the lighting. Both modalities are therefore mutually complementary. Surface normal image is then analogous to FDG-PET in the sense that both are informative about certain regions in the scene which their respective structural image modalities (photograph and pCT) fail to capture, although each of them is not sufficient for their respective task. 
+    
+    \item Depthmap: Depthmaps are single-channel 2D images whose pixel intensities represent the distance of the scene elements from the camera, and is the target image modality in the simulated problem task. It has a mathematical relationship with surface normals, since both are ``quantitative" images and the latter can be computed from the former directly using gradients of the depth values \footnote{Algorithm for computing surface normals from depthmap: \url{https://bit.ly/3mQS588.}}. For our purpose, the depthmap serves an analogous role to HX4-PET in that tumor hypoxia is closely related to metabolism, a relationship which is physiological in nature.
+    
+\end{enumerate}
+
+Using equivalent 2D architecture of their 3D generator and discriminator networks, we apply the same three GAN systems -- Pix2Pix, CycleGAN-naive and CycleGAN-balanced -- on this simulated problem task to obtain a prior estimation of their relative performance. In CycleGAN-balanced training, to serve a role that is analogous to ldCT-unreg in the HX4-PET synthesis task, photographic images corrupted with added Gaussian noise are used as the structural context images for their corresponding depthmaps.
+
+A small-scale dataset for this simulated task is curated from the large ClearGrasp set. Out of the five types of transparent objects whose images the original dataset contains, we limit our data to one object type which has a relatively simple structure -- the ``square plastic bottle". From the dataset, 25,000 training samples and 100 validation samples corresponding to this object were selected to compose the small dataset. 
