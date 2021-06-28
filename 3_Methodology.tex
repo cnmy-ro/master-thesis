@@ -68,7 +68,7 @@ HX4-PET-unreg images, however, are represented in terms of the non-standard CNTS
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.9\linewidth]{figures/Data/data_processing_overview-step_1.png}
-    \caption{Overview of the first phase of data processing. Images are loaded from storage and converted into suitable representation.}
+    \caption{Overview of the first phase of data processing. Images are loaded from storage and converted into a suitable representation.}
     \label{fig:data_proc_overview_1}
 \end{figure}
 
@@ -85,7 +85,7 @@ Following this, the FDG-PET, HX4-PET-unreg, pCT and the tumor and body masks are
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=\linewidth]{figures/Data/fdgpet_pct_fx4petreg_crop2/N010-fdgpet_pct_hx4petreg-uncropped_crop2.png}
+    \includegraphics[width=\linewidth]{figures/Data/fdgpet_pct_hx4petreg_crop2/N010-fdgpet_pct_hx4petreg-uncropped_crop2.png}
     \caption{Stage 2 cropping of the input images (FDG-PET and pCT), the masks (tumor and body, not shown here) and the ground truth (HX4-PET-reg) to a common FOV. All FOVs are displayed to show their overlap.}
     \label{fig:fdgpet_pct_hx4petreg_crop2}
 \end{figure}
@@ -220,7 +220,7 @@ To begin with, we slightly alter what the domains \textit{A} and \textit{B} deno
     \item \textit{B$\rightarrow$A$\rightarrow$B cycle}: In this case, ldCT-unreg is the available CT image that is coupled with the HX4-PET-unreg. In \textit{B}$\rightarrow$\textit{A} translation, $G_{BA}$ uses these two images to compute a synthetic FDG-PET. In \textit{A}$\rightarrow$\textit{B} translation, $G_{AB}$ reuses the ldCT-unreg and together with the synthetic FDG-PET (note that the ldCT-unreg and the synthetic FDG-PET are aligned), it reconstructs HX4-PET-unreg. Cycle-consistency is applied between the original and reconstructed HX4-PET-unreg. The same ldCT-unreg image provides anatomical context for FDG-PET synthesis and for HX4-PET-unreg reconstruction, and if the synthetic FDG-PET represents plausible metabolism patterns, then HX4-PET-unreg can be mostly recovered. In this cycle as well, the adversarial and cycle-consistency objectives would behave in a mutually reinforcing manner.
 \end{itemize}
 
-The introduction of CT as an \textit{input} to both the generators creates a balance between the complexities of the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings since none of them involves \textit{predicting} fake CT information, all the while still relying on completely unpaired training data. Unlike CycleGAN-naive, the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} relations are not anymore inverse to each other, in the strict sense of the word. We term this modified design \textit{CycleGAN-balanced}. Figure \ref{fig:cyclegan_balanced} shows a schematic of the training phases of its generators and discriminators.
+The introduction of CT as an \textit{input} to both the generators creates a balance between the complexities of the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} mappings since none of them involves \textit{predicting} fake CT information, while still using completely unpaired training data. Unlike CycleGAN-naive, the \textit{A}$\rightarrow$\textit{B} and \textit{B}$\rightarrow$\textit{A} relations are not anymore inverses of each other, in the strict sense of the word. We term this modified design \textit{CycleGAN-balanced}. Figure \ref{fig:cyclegan_balanced} shows a schematic of the training phases of its generators and discriminators.
 
 \begin{figure}[h!]
     \centering

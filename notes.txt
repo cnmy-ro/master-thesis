@@ -21,6 +21,15 @@ Thesis - Long story short:
         3. Unpaired methods more promising because -- no reg related issues, less pressure on clinic and patients for acquiring paired images. 
 
 
-TODO:
+
+TODO in thesis:
     - Alexia's suggestions for content structure and introduction
     - Fix tenses
+    - Update figures -- text fonts, page fitting
+    - Inline URL hyperlinks
+
+
+
+TODO work after thesis:
+    - Minor stuff to improve on:
+        1. Data loading: More statistically informed TBR normalization

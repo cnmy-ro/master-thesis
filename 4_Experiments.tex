@@ -147,7 +147,7 @@ Results of the visual inspection are reported in Table \ref{tab:hx4_image_qualit
     \centering
     \makebox[\textwidth][c]
     {
-        \includegraphics[width=1.7\linewidth]{figures/Expt_2/image_quality/image_quality_inspection_viz-2.png}
+        \includegraphics[width=1.4\linewidth]{figures/Expt_2/image_quality/image_quality_inspection_viz-2.png}
     }
     \caption{Corresponding slices of the inputs, the ground truth and the predictions. Gross tumor volumes (GTV) are delineated with green contours. Severe background noise is visible in CycleGAN-naive outputs, which also penetrates into the foreground as seen in (a). Sharp edged holes in (a) and a rift in (b) (cyan ellipses), a common occurrence in CycleGAN-naive predictions. In (d), the Pix2Pix output shows structure break at the bottom likely caused due to model being trained on faulty ground truth (cyan bounding boxes). In (c), the outputs of CycleGAN-naive and CycleGAN-balanced have a hallucinated ring-shaped hypoxia signature near the heart (cyan arrows).}
     \label{fig:hx4_image_quality_inspection_viz}
@@ -162,8 +162,11 @@ Finally, the type of image degradation related to the presence of hallucinated s
 In summary, the results of the visual inspection reflect the quantitative evaluation results. Pix2Pix produced synthetic HX4-PET images that are visually highly similar to the ground truth, mostly owing to its supervised training. However, because it was trained in the supervised manner on imperfect ground truth images, it also produced locally specific structure breaks in its predictions. Among the unpaired GAN systems, CycleGAN-balanced showed great improvement over CycleGAN-naive and was able to greatly reduce degradation caused by noise and hallucinated structures.
 
 
-% -----------------------------------------------------------------------------------
-\subsection{Results and Analysis 2: To Analysis of Model Convergence during Training}
+% ------------------------------------------------------------------------------
+\subsection{Results and Analysis 2: Analyzing Model Convergence during Training}
+\label{cycelgan_convergence}
+
+
 \subsubsection{Adversarial training of CycleGAN} 
 Informally, model convergence refers to a case where the machine learning model's loss approaches a certain optimal value with a decreasing rate over the training iterations. In GAN training, two networks are simultaneously optimized with conflicting objectives. In theory, a Vanilla GAN model asymptotically converges to an equilibrium state where the generator perfectly models the data distribution and the discriminator's prediction over real and fake data is 0.5 on average, i.e. it can only do random guessing \cite{goodfellow2014generative}. This stands, of course, only under the condition that the discriminator is trained to optimality for each iteration of the generator's update. In practice, the discriminator is updated just once per generator update, but since the discriminator's task of binary classification is simpler than the generator's task of image synthesis, the discriminator is likely to learn faster and remain competitive with the generator in the corresponding iterations. In this part of the experiment, GAN convergence is analyzed empirically for the CycleGAN-naive and CycleGAN-balanced systems, by reasoning based on their recorded training losses.
 
@@ -231,19 +234,19 @@ Additionally, cycle-consistency in CycleGAN-balanced was maintained to a greater
 \begin{figure}[h!]
     \makebox[\textwidth][c]
     {
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_mse.png}
             \caption{}
             \label{fig:metric_val_mse}
         \end{subfigure}
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_mae.png}
             \caption{}
             \label{fig:metric_val_mae}
         \end{subfigure}
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_psnr.png}
             \caption{}
@@ -253,19 +256,19 @@ Additionally, cycle-consistency in CycleGAN-balanced was maintained to a greater
     \newline
     \makebox[\textwidth][c]
     {
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_ssim.png}
             \caption{}
             \label{fig:metric_val_ssim}
         \end{subfigure}
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_nmi.png}
             \caption{}
             \label{fig:metric_val_nmi}
         \end{subfigure}
-        \begin{subfigure}{.5\textwidth}
+        \begin{subfigure}{.4\textwidth}
             \centering
             \includegraphics[width=\linewidth]{figures/Expt_2/gan_convergence/metric_val_histogram_chi2.png}
             \caption{}
@@ -291,22 +294,22 @@ This experiment focuses on clinical evaluation of the synthetic hypoxia PET imag
 
 % ---------------------------
 \subsection{Experiment Setup}
-This experiment involves analyzing the trained models' predicted HX4-PET-syn. The HX4-PET-syn images were computed for each patient in the validation set using the fully-trained models are were converted to SUV and stored as NRRD files. These were then loaded and analyzed. Each of the HX4-PET-syn images was first cropped to a bounding box containing just the GTV. The GTV mask was then applied to the image, and intensities outside the mask were set to 0. Next, the GTV SUV values were converted to the tumor-to-background ratio (TBR) by dividing each GTV voxel's SUV with $SUV_{aorta-mean}$. From this point onward, the different hypoxia quantification metrics were computed separately as follows:
+HX4-PET-syn images are computed for each patient in the validation set using the fully trained models, their units converted to SUV scale, and stored as NRRD files. The images are then loaded and analyzed. Each HX4-PET-syn image and its corresponding ground truth HX4-PET-reg are first cropped to a bounding box containing just the GTV. The GTV mask is then applied to the images, and intensities outside the mask are set to 0. Next, the GTV SUV values are converted to the tumor-to-background ratio (TBR) by dividing each GTV voxel's SUV with $SUV_{aorta-mean}$. From this point onward, the different hypoxia quantification metrics are computed separately as follows:
 
 \begin{enumerate}
     
-    \item \textit{MSE-GTV and SSIM-GTV:} The MSE and SSIM were calculated only on the GTV voxels using array masking.
+    \item \textit{MSE-GTV and SSIM-GTV:} MSE and SSIM are calculated only on the GTV voxels using array masking.
     
-    \item \textit{Hypoxic tumor classification:} One of the ways of classifying the tumor as hypoxic or non-hypoxic is by calculating the total physical volume of the hypoxic region in the GTV, known as hypoxic volume (HV), and applying a threshold. HV was calculated by first performing point-wise intensity thresholding using standard TBR threshold of 1.4 (Zegers et al. \cite{zegers2013hypoxia}) to obtain a binary image of hypoxic voxels followed by calculating the total physical volume (in mm$^3$) occupied by them. Then, an HV threshold of 1 cm$^3$ was applied beyond which the tumor was classified as hypoxic, similar to Even et al. \cite{even2017predicting}. Tumor classification was performed for each predicted image and its corresponding ground truth, and the mean accuracy was derived.
+    \item \textit{Hypoxic tumor classification:} One of the ways of classifying the tumor as hypoxic or non-hypoxic is by calculating the total physical volume of the hypoxic region in the GTV, known as hypoxic volume (HV), and applying a threshold. We calculate HV by first performing point-wise intensity thresholding using standard TBR threshold of 1.4 (Zegers et al. \cite{zegers2013hypoxia}) to obtain a binary image of hypoxic voxels followed by calculating the total physical volume (in mm$^3$) occupied by them. Then, HV threshold of 1 cm$^3$ is applied beyond which the tumor is classified as hypoxic, similar to Even et al. \cite{even2017predicting}. Tumor classification is performed for each predicted image and its corresponding ground truth, and the mean accuracy is derived.
     
-    \item \textit{Hypoxic region segmentation:} The 3D hypoxic region in the GTV was segmented by applying the standard TBR threshold of 1.4. This was performed for each predicted image and its corresponding ground truth image. Then, the Dice Similarity Coefficient (DSC) was used to measure the overlap between them. 
+    \item \textit{Hypoxic region segmentation:} The 3D hypoxic region in the GTV is segmented by applying the standard TBR threshold of 1.4. This is performed for each predicted image and its corresponding ground truth image. Then, the Dice Similarity Coefficient (DSC) is used to measure the overlap between the hypoxic regions. 
 
 \end{enumerate}
 
 
 % -------------------------------
 \subsection{Results and Analysis}
-Table \ref{tab:hypoxia_metrics} reports the mean values of the hypoxia quantification measures over the validation set. The quantitative results provide no conclusive evidence on the model performances and are, in fact, slightly contradictory to previous results. MSE-GTV and SSIM-GTV were very similar for all the models, and Pix2Pix was less competent in accurately predicting the hypoxic regions. CycleGAN-balanced didn't show an improvement over CycleGAN-naive here. A visualization of the predicted tumor hypoxia patterns is shown in Figure \ref{fig:hypoxia_viz}. Two important observations can be made are. First, the Pix2Pix outputs show significant checkerboard-like noise patterns. Note that these are of different nature compared the image-wide foreground noise criterion defined earlier in \ref{expt_2_1} in that these are of higher frequency and are localized to high intensity regions, such as the tumor locality shown in the figure. Predictions from CycleGANs show minimal noise here. Second, Pix2Pix predictions didn't contain sufficiently high intensity regions to be capable of being segmented and their spatial patterns did not match the hypoxic patterns in the ground truth. In case of the CycleGANs, their predicted hypoxic patterns were more similar to the metabolic patterns from FDG-PET, instead of the ground truth.
+Table \ref{tab:hypoxia_metrics} reports the mean values of the hypoxia quantification measures over the validation set. The quantitative results provide no conclusive evidence on the model performances and are, in fact, slightly contradictory to previous results. MSE-GTV and SSIM-GTV were very similar for all the models, and Pix2Pix was less competent in accurately predicting the hypoxic regions. CycleGAN-balanced didn't show an improvement over CycleGAN-naive here. A visualization of the predicted tumor hypoxia patterns is shown in Figure \ref{fig:hypoxia_viz}. Two important observations can be made are. First, the Pix2Pix outputs show significant checkerboard-like noise patterns. Note that these are of different nature compared the image-wide foreground noise defined as a failure criterion earlier in experiment \ref{Expt_2} in that these are of higher frequency and are localized to high-intensity regions, such as the tumor locality shown in the figure. Predictions from the CycleGANs show minimal noise. Second, Pix2Pix predictions do not contain sufficiently high intensity regions to be capable of being segmented and their spatial patterns do not match the hypoxic patterns in the ground truth. Since only a small number of voxels carry sufficiently high intensity values, there existed many false-negative voxels which collectively amounted to hypoxic tumors being misclassified as non-hypoxic. In case of the CycleGANs, their predicted hypoxic patterns are more similar to the metabolic patterns from FDG-PET, instead of the ground truth.
 
 \begin{table}[h!]
     \footnotesize
@@ -335,10 +338,5 @@ Table \ref{tab:hypoxia_metrics} reports the mean values of the hypoxia quantific
     \label{fig:hypoxia_viz}
 \end{figure}
 
-One of the reasons Pix2Pix fails here appears to be related to its supervised training. The ground truth images contain registration errors which are more pronounced at the small scale in which this evaluation was performed. The fine hypoxia patterns in the ground truth, including those within the tumor, might have shifted post-registration causing misalignment with the CT and FDG-PET features, thereby inducing noise in the paired training data. Therefore, although the model could produce synthetic hypoxia images of an overall higher quality, these images when examined at the scale of the tumor reveal large inaccuracies.
-In case of the two CycleGANs, the tumor hypoxia patterns matched the spatial pattern of FDG uptake suggesting that the models learned to be overly dependent on FDG-PET features.
-Another reason for poor clinical performance of all three models might be the small size of the training dataset. Even when using a patch-based training approach, the number of sufficiently varied training samples was very low. Training on a larger dataset would indeed help improve performance.
-
-In our dataset, HX4-PET scans for all patient were acquired on a different day from FDG-PET and pCT acquisition. A concerning problem with tumor hypoxia is the the fact that the hypoxic region has a tendency to change over time, even over a period of hours [cite ...]. Zegers et al. \cite{zegers2013hypoxia} raise this argument to explain the relatively low \textit{voxel-level} correlation they observed between FDG-PET and HX4-PET SUV values despite a significant correlation on \textit{tumor-level} properties between the two modalities. It is possible that in our data, the state of the tumor captured by FDG-PET/pCT might not correspond perfectly to its state captured by HX4-PET. In such a case, even if the HX4-PET image were to be perfectly registered over pCT and FDG-PET, a supervised method that assumes voxel-level correspondence would be less effective to say the least. In this view, it could then be possible that the hypoxia patterns predicted by the CycleGANs, although not matching the ground truth, might reflect the ``actual" hypoxia distribution.
-
-Unpaired approaches like CycleGAN might be more suitable suitable for the HX4-PET synthesis problem for the aforementioned reasons, given sufficient training data.
+One of the reasons Pix2Pix fails here appears to be related to its supervised training. The ground truth images contain registration errors that are more pronounced at the small scale in which this evaluation is performed. The fine hypoxia patterns in the ground truth, including those within the tumor, might have shifted post-registration causing misalignment with the CT and FDG-PET features, thereby inducing noise in the paired training data. Therefore, although the Pix2Pix model could produce synthetic hypoxia images of an overall higher quality, these images reveal large inaccuracies when examined at the scale of the tumor.
+In case of the two CycleGANs, the tumor hypoxia patterns matched the spatial pattern of FDG uptake suggesting that the models learned to excessively depend on FDG-PET features. Another reason for poor clinical performance of all three models might be the small size of the training dataset. Even when using a patch-based training approach, the number of sufficiently varied training samples was very low. Training on a larger dataset could likely improve performance.
