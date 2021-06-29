@@ -23,9 +23,9 @@ Thesis - Long story short:
 
 
 TODO in thesis:
-    - Alexia's suggestions for content structure and introduction
-    - Fix tenses
-    - Update figures -- text fonts, page fitting
+    x Alexia's suggestions for content structure and introduction
+    x Fix tenses
+    x Update figures -- text fonts, page fitting
     - Inline URL hyperlinks
 
 

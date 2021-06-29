@@ -107,41 +107,79 @@ Additionally, a systematic visual inspection of the synthetic images is performe
 \subsection{Results and Analysis 1: Evaluating Fully Trained Models}
 Performance of the three 3D models as measured by the six image metrics is reported in Table \ref{tab:hx4_image_quality_quant}. Pix2Pix emerges to be the best performing model as evaluated by all six metrics, followed by CycleGAN-balanced whose performance values are very close to those of Pix2Pix. CycleGAN-naive performs the worst, as agreed by all the metrics. Borda counting based on the individual performance rankings of the metrics resulted in the same global ranking on the models -- Pix2Pix as the best model, followed by CycleGAN-balanced and then finally CycleGAN-naive.
 
+% % Original table
+% \begin{table}[h!]
+%     \scriptsize
+%     \centering
+%     \makebox[\textwidth][c]
+%     {
+%         \begin{tabular}{ccccccc}
+%             \textbf{Method}   & \textbf{MSE}   & \textbf{MAE}   & \textbf{PSNR}   & \textbf{SSIM}   & \textbf{NMI}   & \textbf{Histogram dist.} \\
+%             \hline
+%             Pix2Pix   & \textbf{0.009} $\pm$ 0.006   & \textbf{0.049} $\pm$ 0.008   & \textbf{27.467} $\pm$ 1.946   & \textbf{0.582} $\pm$ 0.086   & \textbf{1.215} $\pm$ 0.016   & \textbf{0.563} $\pm$ 0.160 \\
+%             CycleGAN-naive   & 0.043 $\pm$ 0.004   & 0.185 $\pm$ 0.006   & 20.217 $\pm$ 2.032   & 0.190 $\pm$ 0.044   & 1.099 $\pm$ 0.009   & 1.289 $\pm$ 0.201 \\
+%             CycleGAN-balanced   & \textit{0.016} $\pm$ 0.008   & \textit{0.067} $\pm$ 0.010   & \textit{25.119} $\pm$ 1.812   & \textit{0.5} $\pm$ 0.075   & \textit{1.181} $\pm$ 0.015   & \textit{0.662} $\pm$ 0.124 \\
+%         \end{tabular}
+%     }
+%     \caption{Performance on the Maastro Lung HX4-PET validation set. Best and second-to-best values are highlighted with bold and italics font, respectively. Performance of the unpaired CycleGAN-balanced model reaches close to that of the paired Pix2Pix model.}
+%     \label{tab:hx4_image_quality_quant}
+% \end{table}
+
+% Transposed table
 \begin{table}[h!]
-    \scriptsize
     \centering
-    \makebox[\textwidth][c]
-    {
-        \begin{tabular}{ccccccc}
-            \textbf{Method}   & \textbf{MSE}   & \textbf{MAE}   & \textbf{PSNR}   & \textbf{SSIM}   & \textbf{NMI}   & \textbf{Histogram dist.} \\
-            \hline
-            Pix2Pix   & \textbf{0.009} $\pm$ 0.006   & \textbf{0.049} $\pm$ 0.008   & \textbf{27.467} $\pm$ 1.946   & \textbf{0.582} $\pm$ 0.086   & \textbf{1.215} $\pm$ 0.016   & \textbf{0.563} $\pm$ 0.160 \\
-            CycleGAN-naive   & 0.043 $\pm$ 0.004   & 0.185 $\pm$ 0.006   & 20.217 $\pm$ 2.032   & 0.190 $\pm$ 0.044   & 1.099 $\pm$ 0.009   & 1.289 $\pm$ 0.201 \\
-            CycleGAN-balanced   & \textit{0.016} $\pm$ 0.008   & \textit{0.067} $\pm$ 0.010   & \textit{25.119} $\pm$ 1.812   & \textit{0.5} $\pm$ 0.075   & \textit{1.181} $\pm$ 0.015   & \textit{0.662} $\pm$ 0.124 \\
-        \end{tabular}
-    }
-    \caption{Performance on the Maastro Lung HX4-PET validation set. Best and second-to-best values are highlighted with bold and italics font, respectively. Performance of the unpaired CycleGAN-balanced model reaches close to that of the paired Pix2Pix model.}
+    \begin{tabular}{l || lll}
+         \textbf{Method} $\rightarrow$  & Pix2Pix                      & CycleGAN-naive      & CycleGAN-balanced            \\
+         \hline
+         \textbf{MSE}                   & \textbf{0.009} $\pm$ 0.006   & 0.043 $\pm$ 0.004   & \textit{0.016} $\pm$ 0.008   \\
+         \textbf{MAE}                   & \textbf{0.049} $\pm$ 0.008   & 0.185 $\pm$ 0.006   & \textit{0.067} $\pm$ 0.010   \\
+         \textbf{PSNR}                  & \textbf{27.467} $\pm$ 1.946  & 20.217 $\pm$ 2.032  & \textit{25.119} $\pm$ 1.812  \\
+         \textbf{SSIM}                  & \textbf{0.582} $\pm$ 0.086   & 0.190 $\pm$ 0.044   & \textit{0.5} $\pm$ 0.07      \\
+         \textbf{NMI}                   & \textbf{1.215} $\pm$ 0.016   & 1.099 $\pm$ 0.009   & \textit{1.181} $\pm$ 0.015   \\
+         \textbf{Histogram distance}    & \textbf{0.563} $\pm$ 0.160   & 1.289 $\pm$ 0.201   & \textit{0.662} $\pm$ 0.124   \\
+         \hline
+         \textbf{Performance ranking}   & \textbf{1}                   & 3                   & \textit{2}
+    \end{tabular}
+    \caption{Performance on the Maastro Lung HX4-PET validation set. Best and second-to-best values are highlighted with bold and italics font, respectively. Performance of the unpaired CycleGAN-balanced model reaches close to that of the paired Pix2Pix model. The final performance ranking is calculated by combining each ranking produced by metric, with Borda count.}
     \label{tab:hx4_image_quality_quant}
 \end{table}
 
 Results of the visual inspection are reported in Table \ref{tab:hx4_image_quality_inspection}. Figure \ref{fig:hx4_image_quality_inspection_viz} compares the predictions of the models for different patients and highlights failure modes typical to each model.
 
+% % Original table
+% \begin{table}[h!]
+%     \footnotesize
+%     \centering
+%     \makebox[\textwidth][c]
+%     {
+%         \begin{tabular}{ccccc}
+%             \textbf{Method}   & \textbf{Background noise}   & \textbf{Foreground noise}   & \textbf{Hallucinated structures}   & \textbf{Broken structures}   \\
+%             \hline
+%             Pix2Pix   & \textbf{0\%} (0/19)   & \textbf{26.3\%} (5/19)   & \textbf{10.5\%} (2/19)   & \textbf{57.9\%} (11/19)   \\
+%             CycleGAN-naive   & 100\% (19/19)   & 100\% (19/19)   & 57.9\% (11/19)   & 100\% (19/19)   \\
+%             CycleGAN-balanced   & \textit{42.1\%} (8/19)   & \textit{42.1\%} (8/19)   & \textit{31.6\%} (6/19)   & \textit{89.5\%} (17/19)   \\
+%         \end{tabular}
+%     }
+%     \caption{Fraction of the total validation set images meeting the corresponding image degradation criteria. Best and second-to-best values are highlighted with bold and italics font, respectively.}
+%     \label{tab:hx4_image_quality_inspection}
+% \end{table}
+
+% Transposed table
 \begin{table}[h!]
-    \footnotesize
     \centering
-    \makebox[\textwidth][c]
-    {
-        \begin{tabular}{ccccc}
-            \textbf{Method}   & \textbf{Background noise}   & \textbf{Foreground noise}   & \textbf{Hallucinated structures}   & \textbf{Broken structures}   \\
-            \hline
-            Pix2Pix   & \textbf{0\%} (0/19)   & \textbf{26.3\%} (5/19)   & \textbf{10.5\%} (2/19)   & \textbf{57.9\%} (11/19)   \\
-            CycleGAN-naive   & 100\% (19/19)   & 100\% (19/19)   & 57.9\% (11/19)   & 100\% (19/19)   \\
-            CycleGAN-balanced   & \textit{42.1\%} (8/19)   & \textit{42.1\%} (8/19)   & \textit{31.6\%} (6/19)   & \textit{89.5\%} (17/19)   \\
-        \end{tabular}
-    }
+    \begin{tabular}{l || lll}
+         \textbf{Method} $\rightarrow$     & Pix2Pix                    & CycleGAN-naive  & CycleGAN-balanced          \\
+         \hline
+         \textbf{Background noise}         & \textbf{0\%} (0/19)        & 100\% (19/19)   & \textit{42.1\%} (8/19)     \\
+         \textbf{Foreground noise}         & \textbf{26.3\%} (5/19)     & 100\% (19/19)   & \textit{42.1\%} (8/19)     \\
+         \textbf{Hallucinated structures}  & \textbf{10.5\%} (2/19)     & 57.9\% (11/19   & \textit{31.6\%} (6/19)     \\
+         \textbf{Broken structures}        & \textbf{57.9\%} (11/19)    & 100\% (19/19)   & \textit{89.5\%} (17/19)    \\
+         
+    \end{tabular}
     \caption{Fraction of the total validation set images meeting the corresponding image degradation criteria. Best and second-to-best values are highlighted with bold and italics font, respectively.}
     \label{tab:hx4_image_quality_inspection}
 \end{table}
+
 
 \begin{figure}
     \centering
@@ -311,28 +349,47 @@ HX4-PET-syn images are computed for each patient in the validation set using the
 \subsection{Results and Analysis}
 Table \ref{tab:hypoxia_metrics} reports the mean values of the hypoxia quantification measures over the validation set. The quantitative results provide no conclusive evidence on the model performances and are, in fact, slightly contradictory to previous results. MSE-GTV and SSIM-GTV were very similar for all the models, and Pix2Pix was less competent in accurately predicting the hypoxic regions. CycleGAN-balanced didn't show an improvement over CycleGAN-naive here. A visualization of the predicted tumor hypoxia patterns is shown in Figure \ref{fig:hypoxia_viz}. Two important observations can be made are. First, the Pix2Pix outputs show significant checkerboard-like noise patterns. Note that these are of different nature compared the image-wide foreground noise defined as a failure criterion earlier in experiment \ref{Expt_2} in that these are of higher frequency and are localized to high-intensity regions, such as the tumor locality shown in the figure. Predictions from the CycleGANs show minimal noise. Second, Pix2Pix predictions do not contain sufficiently high intensity regions to be capable of being segmented and their spatial patterns do not match the hypoxic patterns in the ground truth. Since only a small number of voxels carry sufficiently high intensity values, there existed many false-negative voxels which collectively amounted to hypoxic tumors being misclassified as non-hypoxic. In case of the CycleGANs, their predicted hypoxic patterns are more similar to the metabolic patterns from FDG-PET, instead of the ground truth.
 
+% % Original table
+% \begin{table}[h!]
+%     \footnotesize
+%     \centering
+%     \makebox[\textwidth][c]
+%     {
+%         \begin{tabular}{ccccc}
+%             \textbf{Method}   & \textbf{MSE-GTV}   & \textbf{SSIM-GTV}   & \textbf{Tumor classif. acc.}   & \textbf{Hypoxic region seg. Dice} \\
+%             \hline
+%             Pix2Pix   & \textbf{0.067} $\pm$ 0.040   & 0.870 $\pm$ 0.082   & 61.2\% (12/19)   & 0.058 $\pm$ 0.092 \\
+%             CycleGAN-naive   & 0.079 $\pm$ 0.046   & \textit{0.884} $\pm$ 0.066   & \textbf{78.9}\% (15/19)   & \textbf{0.141} $\pm$ 0.184 \\
+%             CycleGAN-balanced   & \textit{0.068} $\pm$ 0.042   & \textbf{0.886} $\pm$ 0.066   & \textit{73.7\%} (14/19)   & \textit{0.127} $\pm$ 0.174 \\
+%         \end{tabular}
+%     }
+%     \caption{Results of tumor hypoxia quantification. Best and second-to-best values are highlighted with bold and italics font, respectively. For tumor classification, the accuracy is given in percentage values and fraction of patients with correctly classified tumors.}
+%     \label{tab:hypoxia_metrics}
+% \end{table}
+
+% Transposed table
 \begin{table}[h!]
     \footnotesize
     \centering
-    \makebox[\textwidth][c]
-    {
-        \begin{tabular}{ccccc}
-            \textbf{Method}   & \textbf{MSE-GTV}   & \textbf{SSIM-GTV}   & \textbf{Tumor classif. accu.}   & \textbf{Hypoxic region seg. Dice} \\
-            \hline
-            Pix2Pix   & \textbf{0.067} $\pm$ 0.040   & 0.870 $\pm$ 0.082   & 61.2\% (12/19)   & 0.058 $\pm$ 0.092 \\
-            CycleGAN-naive   & 0.079 $\pm$ 0.046   & \textit{0.884} $\pm$ 0.066   & \textbf{78.9}\% (15/19)   & \textbf{0.141} $\pm$ 0.184 \\
-            CycleGAN-balanced   & \textit{0.068} $\pm$ 0.042   & \textbf{0.886} $\pm$ 0.066   & \textit{73.7\%} (14/19)   & \textit{0.127} $\pm$ 0.174 \\
-        \end{tabular}
-    }
+    \begin{tabular}{l || lll}
+         \textbf{Method} $\rightarrow$                & Pix2Pix                       & CycleGAN-naive                & CycleGAN-balanced              \\
+         \hline
+         \textbf{MSE-GTV}                             & \textbf{0.067} $\pm$ 0.040    & 0.079 $\pm$ 0.046             & \textit{0.068} $\pm$ 0.042     \\
+         \textbf{SSIM-GTV}                            & 0.870 $\pm$ 0.082             & \textit{0.884} $\pm$ 0.066    & \textbf{0.886} $\pm$ 0.066     \\
+         \textbf{Tumor classification accuracy}       & 61.2\% (12/19)                & \textbf{78.9}\% (15/19)       & \textit{73.7\%} (14/19)        \\
+         \textbf{Hypoxic region seg. Dice}    & 0.058 $\pm$ 0.092             & \textbf{0.141} $\pm$ 0.184    &  \textit{0.127} $\pm$ 0.174    \\
+    \end{tabular}
     \caption{Results of tumor hypoxia quantification. Best and second-to-best values are highlighted with bold and italics font, respectively. For tumor classification, the accuracy is given in percentage values and fraction of patients with correctly classified tumors.}
     \label{tab:hypoxia_metrics}
 \end{table}
+
+
 
 \begin{figure}[h!]
     \centering
     \makebox[\textwidth][c]
     {
-        \includegraphics[width=1.1\linewidth]{figures/Expt_3/hypoxia_viz.png}
+        \includegraphics[width=\linewidth]{figures/Expt_3/hypoxia_viz.png}
     }
     \caption{Tumor hypoxia patterns generated by the models. GTV is delineated with green contour, and the hypoxic region in each of three models' prediction and the ground truth is marked with blue contours. In both examples, Pix2Pix predictions didn't contain sufficiently intense regions, hence no hypoxic areas are seen segmented in these slices.}
     \label{fig:hypoxia_viz}
