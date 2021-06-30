@@ -27,6 +27,7 @@ TODO in thesis:
     x Fix tenses
     x Update figures -- text fonts, page fitting
     - Inline URL hyperlinks
+    - font of loss function "L"
 
 
 
