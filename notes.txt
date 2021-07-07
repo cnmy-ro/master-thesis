@@ -34,3 +34,7 @@ TODO in thesis:
 TODO work after thesis:
     - Minor stuff to improve on:
         1. Data loading: More statistically informed TBR normalization
+    - Albi's suggestion: "For the registration errors, I was wondering if we should look at better methods for co-registration using our clinical workstations?"
+    - Pix2Pix finetuning
+    - CycleGAN ablation study
+    - Turing test with Dirk
