@@ -249,18 +249,14 @@ Loosely based on the notation used in \cite{isola2017image}, we use \textit{Enc-
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{|c|c|c|}
+    \begin{tabular}{ccc}
         \hline
         \textbf{Encoding Level} & \textbf{Encoder block} & \textbf{Decoder block} \\
         \hline
         1     & Enc-C64          & Dec-T1           \\
-        \hline
         2     & Enc-C128         & Dec-T64          \\
-        \hline
         3     & Enc-C256         & Dec-T128         \\
-        \hline
         4     & Enc-C512         & Dec-T256         \\
-        \hline
         5     & Enc-C512         & Dec-T512         \\
         \hline
     \end{tabular}
@@ -279,18 +275,14 @@ Let \textit{Ck} denote a block composed on Convolution-InstanceNorm-LeakyReLU wh
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{cc}
         \hline
         \textbf{Block number} & \textbf{Discriminator block}\\
         \hline
         1     & C64       \\
-        \hline
         2     & C128      \\
-        \hline
         3     & C256      \\
-        \hline 
         4     & C512      \\
-        \hline
         5     & C1        \\
         \hline
     \end{tabular}
