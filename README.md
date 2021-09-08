@@ -1,6 +1,8 @@
 # Predicting Tumor Hypoxia Map from FDG-PET/CT Images using GANs
 
+
 Master's thesis project completed as part of my M.Sc. degree in Artificial Intelligence at Maastricht University, and in collaboration with [Maastro Clinical Data Science (CDS) imaging research group](https://github.com/Maastro-CDS-Imaging-Group).
+
 
 
 ----------------------
