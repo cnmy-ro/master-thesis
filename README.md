@@ -13,5 +13,6 @@ Tumor hypoxia is characterized by an insufficient oxygen concentration in certai
 -------
 ## Code
 
-1. [HX4-PET-translation](https://github.com/Maastro-CDS-Imaging-Group/HX4-PET-translation): Jupyter notebooks, scripts, and utility code for dataset preparation, data pre-processing, and output image evaluation.
-2. [ganslate](https://github.com/ganslate-team/ganslate) : General-purpose GAN framework for image-to-image translation based on PyTorch, developed mainly by Ibrahim Hadzic ([@ibro45](https://github.com/ibro45)) and Suraj Pai ([@surajpaib](https://github.com/surajpaib)). In addition to having used heavily to drive my experiments, I contributed and still continue to contribute to this codebase.
+1. [ganslate](https://github.com/ganslate-team/ganslate): General-purpose GAN framework for image-to-image translation based on PyTorch, developed mainly by Ibrahim Hadzic ([@ibro45](https://github.com/ibro45)) and Suraj Pai ([@surajpaib](https://github.com/surajpaib)). In addition to having used heavily to drive my experiments, I contributed and still continue to contribute to this codebase.
+
+2. [HX4-PET-translation](https://github.com/Maastro-CDS-Imaging-Group/HX4-PET-translation): Project-specific code -- Jupyter notebooks, scripts, and utility code for dataset preparation, data pre-processing, and output image evaluation.
